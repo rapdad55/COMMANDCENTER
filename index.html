@@ -1,0 +1,1522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CMD CENTER</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --black:    #0a0a0a;
+  --surface:  #111111;
+  --s2:       #1a1a1a;
+  --s3:       #242424;
+  --s4:       #2e2e2e;
+  --s5:       #3d3d3d;
+  --muted:    #666;
+  --dim:      #999;
+  --soft:     #c8c8c8;
+  --white:    #f0efe9;
+  --yellow:   #F5C842; --yellow-d:#b8941f; --yellow-bg:#1e1900;
+  --blue:     #3B8EEA; --blue-d:#1a5faa;   --blue-bg:#061528;
+  --pink:     #E8527A; --pink-d:#b03058;   --pink-bg:#200a10;
+  --purple:   #9D6FF5; --purple-d:#6535c8; --purple-bg:#110a24;
+  --green:    #2ECC71; --green-d:#1a8a4a;  --green-bg:#071a0e;
+  --orange:   #F0892A; --orange-d:#b05c10; --orange-bg:#1c0e00;
+  --r:8px; --r-sm:5px; --sbw:230px;
+  --font-d:'Bebas Neue',sans-serif; --font:'DM Sans',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;background:var(--black);color:var(--white);font-family:var(--font);font-size:14px;line-height:1.6;}
+input,textarea,button{font-family:var(--font);font-size:13px;}
+button{cursor:pointer;}
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--s5);border-radius:2px;}
+
+/* ── SHELL ── */
+.app{display:flex;height:100vh;}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sbw);background:var(--surface);
+  border-right:1px solid var(--s3);
+  display:flex;flex-direction:column;flex-shrink:0;
+  overflow:hidden;transition:width .25s cubic-bezier(.4,0,.2,1);
+  position:relative;z-index:10;
+}
+.sidebar.closed{width:52px;}
+.sb-toggle{
+  position:absolute;top:14px;right:10px;
+  width:28px;height:28px;background:var(--s3);
+  border:none;border-radius:var(--r-sm);
+  color:var(--dim);display:flex;align-items:center;justify-content:center;
+  font-size:16px;transition:color .15s,background .15s;z-index:2;
+}
+.sb-toggle:hover{background:var(--s4);color:var(--white);}
+
+.sb-logo{
+  padding:16px 14px 14px;border-bottom:1px solid var(--s3);
+  overflow:hidden;white-space:nowrap;
+  min-height:64px;display:flex;align-items:center;gap:10px;flex-shrink:0;
+}
+.sb-icon{
+  width:28px;height:28px;background:var(--s3);border-radius:var(--r-sm);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-d);font-size:13px;color:var(--white);flex-shrink:0;
+}
+.sb-text{overflow:hidden;}
+.sb-text h1{font-family:var(--font-d);font-size:18px;letter-spacing:.06em;line-height:1;color:var(--white);}
+.sb-text p{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px;}
+.closed .sb-text{display:none;}
+
+.sb-nav{flex:1;overflow-y:auto;padding:10px 8px;}
+.sb-glabel{
+  font-size:9px;font-weight:700;text-transform:uppercase;
+  letter-spacing:.12em;color:var(--muted);
+  padding:8px 8px 4px;white-space:nowrap;overflow:hidden;
+}
+.closed .sb-glabel{opacity:0;pointer-events:none;}
+
+.nb{
+  display:flex;align-items:center;gap:10px;width:100%;
+  padding:8px 10px;border-radius:var(--r-sm);border:none;
+  background:none;color:var(--dim);font-size:13px;font-weight:400;
+  text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;
+  transition:background .12s,color .12s;
+}
+.nb:hover{background:var(--s3);color:var(--soft);}
+.nb.active{background:var(--s3);color:var(--white);font-weight:500;}
+.nd{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.nb .cb{
+  margin-left:auto;font-size:10px;font-weight:700;
+  min-width:18px;height:18px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  padding:0 5px;flex-shrink:0;
+}
+.closed .nb{padding:8px;justify-content:center;}
+.closed .nl,.closed .cb{display:none;}
+
+.sb-bot{
+  padding:12px 10px;border-top:1px solid var(--s3);
+  flex-shrink:0;overflow:hidden;white-space:nowrap;
+}
+.sb-meta{font-size:11px;color:var(--muted);padding:0 2px;}
+.npill{
+  display:inline-flex;align-items:center;gap:5px;margin-top:6px;
+  padding:3px 9px;border-radius:4px;font-size:11px;font-weight:500;
+}
+.save-row{display:flex;align-items:center;gap:8px;margin-top:10px;}
+.sf{font-size:10px;color:var(--green);opacity:0;transition:opacity .3s;flex:1;}
+.rb{font-size:10px;color:var(--muted);background:none;border:1px solid var(--s4);border-radius:4px;padding:2px 8px;}
+.rb:hover{color:var(--soft);border-color:var(--s5);}
+.closed .sb-meta,.closed .npill{display:none;}
+.closed .save-row{justify-content:center;}
+.closed .sf,.closed .rb{display:none;}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.topbar{
+  display:flex;align-items:center;gap:16px;
+  padding:16px 28px;border-bottom:1px solid var(--s3);flex-shrink:0;
+}
+.tb-left{flex:1;}
+.tb-title{font-family:var(--font-d);font-size:32px;letter-spacing:.04em;line-height:1;}
+.tb-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.tb-right{text-align:right;font-size:11px;color:var(--muted);line-height:1.6;}
+
+/* week strip */
+.wstrip{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:5px;
+  padding:12px 28px;border-bottom:1px solid var(--s3);flex-shrink:0;
+}
+.wd{
+  background:var(--surface);border:1px solid var(--s3);
+  border-radius:var(--r-sm);padding:7px 5px;text-align:center;
+}
+.wd.today{border-color:var(--green);}
+.wd.nellie{border-color:var(--yellow);background:var(--yellow-bg);}
+.wdn{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);}
+.wd.today .wdn{color:var(--green);} .wd.nellie .wdn{color:var(--yellow);}
+.wdnum{font-family:var(--font-d);font-size:20px;color:var(--white);}
+.wdtag{font-size:9px;margin-top:2px;padding:1px 5px;border-radius:3px;display:inline-block;}
+.tw{background:var(--green-bg);color:var(--green);}
+.tn{background:var(--yellow-bg);color:var(--yellow);}
+.to{background:var(--s3);color:var(--muted);}
+
+/* panels */
+.content{flex:1;overflow-y:auto;}
+.panel{display:none;padding:20px 28px 40px;}
+.panel.active{display:block;animation:up .18s ease;}
+@keyframes up{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--s3);border-radius:var(--r);padding:18px;margin-bottom:12px;}
+.card.ab{border-left:3px solid var(--blue);}
+.card.ay{border-left:3px solid var(--yellow);}
+.card.ap{border-left:3px solid var(--pink);}
+.card.av{border-left:3px solid var(--purple);}
+.card.ag{border-left:3px solid var(--green);}
+.card.ao{border-left:3px solid var(--orange);}
+
+.ch{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.ch h2{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--soft);}
+.cbg{margin-left:auto;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;padding:2px 7px;border-radius:3px;}
+.cbg-b{background:var(--blue-bg);color:var(--blue);}
+.cbg-y{background:var(--yellow-bg);color:var(--yellow);}
+.cbg-p{background:var(--pink-bg);color:var(--pink);}
+.cbg-v{background:var(--purple-bg);color:var(--purple);}
+.cbg-g{background:var(--green-bg);color:var(--green);}
+.cbg-o{background:var(--orange-bg);color:var(--orange);}
+.cbg-x{background:var(--s3);color:var(--muted);}
+
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+
+/* checklist */
+.cl{list-style:none;}
+.cl li{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid var(--s3);}
+.cl li:last-child{border-bottom:none;}
+.cl li input[type="checkbox"]{margin-top:3px;width:14px;height:14px;flex-shrink:0;accent-color:var(--green);cursor:pointer;}
+.cl label{cursor:pointer;color:var(--soft);line-height:1.4;font-size:13px;}
+.cl label .note{font-size:11px;color:var(--muted);display:block;margin-top:1px;font-style:italic;}
+.cl li.done label{text-decoration:line-through;color:var(--muted);}
+.ptag{margin-left:auto;font-size:9px;font-weight:700;padding:2px 6px;border-radius:3px;flex-shrink:0;align-self:center;text-transform:uppercase;letter-spacing:.05em;}
+.ptag-h{background:var(--pink-bg);color:var(--pink);}
+.ptag-n{background:var(--orange-bg);color:var(--orange);}
+.ptag-s{background:var(--blue-bg);color:var(--blue);}
+
+/* fields */
+.fl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);margin-bottom:5px;}
+.fg{margin-bottom:12px;} .fg:last-child{margin-bottom:0;}
+input[type="text"],input[type="number"],textarea{
+  width:100%;background:var(--s2);border:1px solid var(--s4);
+  border-radius:var(--r-sm);padding:8px 11px;color:var(--white);
+  outline:none;transition:border-color .15s;resize:vertical;
+}
+input[type="text"]:focus,input[type="number"]:focus,textarea:focus{border-color:var(--s5);}
+textarea{min-height:72px;}
+input.bare{background:none;border:none;padding:0;color:var(--white);font-size:22px;font-weight:500;}
+input.bare:focus{outline:none;}
+
+/* metrics */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;margin-bottom:12px;}
+.metric{background:var(--s2);border-radius:var(--r-sm);padding:11px 13px;}
+.ml{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:3px;}
+.mv{font-size:20px;font-weight:500;}
+.ms{font-size:11px;color:var(--muted);margin-top:1px;}
+
+/* progress */
+.prog{margin-bottom:10px;} .prog:last-child{margin-bottom:0;}
+.ph{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;}
+.pn{font-size:12px;color:var(--soft);}
+.pp{display:flex;align-items:center;gap:3px;}
+.pp input{width:38px;background:none;border:none;color:var(--muted);font-size:11px;text-align:right;padding:0;}
+.pp input:focus{outline:none;}
+.pp span{font-size:11px;color:var(--muted);}
+.bt{height:3px;background:var(--s3);border-radius:2px;overflow:hidden;}
+.bf{height:100%;border-radius:2px;transition:width .3s;}
+
+/* priority */
+.pl{list-style:none;}
+.pr{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--s3);}
+.pr:last-child{border-bottom:none;}
+.pnum{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;}
+.pr input{flex:1;background:none;border:none;color:var(--white);font-size:13px;padding:0;}
+.pr input::placeholder{color:var(--muted);}
+.pr input:focus{outline:none;}
+
+/* budget */
+.bl{list-style:none;}
+.br{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--s3);font-size:13px;}
+.br:last-child{border-bottom:none;}
+.bc{color:var(--muted);}
+.ba input{width:80px;text-align:right;background:none;border:none;color:var(--white);font-weight:500;padding:0;}
+.ba input:focus{outline:none;}
+.btot{display:flex;justify-content:space-between;padding-top:9px;font-size:13px;font-weight:600;border-top:1px solid var(--s4);margin-top:4px;}
+
+/* income */
+.ir{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--s3);}
+.ir:last-child{border-bottom:none;}
+.irlb{font-size:13px;color:var(--muted);flex:1;}
+.irv{display:flex;align-items:center;gap:3px;color:var(--muted);font-size:13px;}
+.irv input{width:88px;text-align:right;}
+
+/* divider */
+.sdiv{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);padding-bottom:7px;margin:18px 0 10px;border-bottom:1px solid var(--s3);}
+
+/* day blocks */
+.db{background:var(--surface);border:1px solid var(--s3);border-radius:var(--r);padding:13px 15px;margin-bottom:9px;}
+.db h3{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:9px;}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:9px;}
+.chip{font-size:10px;font-weight:500;padding:3px 8px;border-radius:3px;}
+.cy{background:var(--yellow-bg);color:var(--yellow);}
+.cb2{background:var(--blue-bg);color:var(--blue);}
+.cp{background:var(--pink-bg);color:var(--pink);}
+.cv{background:var(--purple-bg);color:var(--purple);}
+.cn{background:var(--s3);color:var(--muted);}
+
+/* summary */
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px;}
+.sc{background:var(--s2);border-radius:var(--r);padding:14px 16px;border:1px solid var(--s3);}
+.sclb{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;}
+.scdn{font-size:22px;font-weight:500;}
+.sctt{font-size:12px;color:var(--muted);}
+.scbar{height:3px;background:var(--s3);border-radius:2px;margin-top:8px;overflow:hidden;}
+.scfill{height:100%;border-radius:2px;}
+
+/* link row */
+.lrow{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--s3);font-size:13px;}
+.lrow:last-child{border-bottom:none;}
+.lrow a{color:var(--blue);text-decoration:none;font-size:12px;}
+.lrow a:hover{text-decoration:underline;}
+.lnote{color:var(--muted);font-size:11px;flex:1;}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ══ SIDEBAR ══════════════════════════════════════════════════ -->
+<aside class="sidebar closed" id="sidebar">
+  <button class="sb-toggle" onclick="toggleSB()" title="Toggle sidebar">&#8942;</button>
+  <div class="sb-logo">
+    <div class="sb-icon">CC</div>
+    <div class="sb-text"><h1>CMD CTR</h1><p>Career OS</p></div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-glabel">Overview</div>
+    <button class="nb active" onclick="go('overview')"><span class="nd" style="background:var(--white)"></span><span class="nl">Dashboard</span></button>
+
+    <div class="sb-glabel">Pillars</div>
+    <button class="nb" onclick="go('rapclass')"><span class="nd" style="background:var(--blue)"></span><span class="nl">RAPCLASS</span><span class="cb cbg-b" id="cnt-rapclass"></span></button>
+    <button class="nb" onclick="go('radio')"><span class="nd" style="background:var(--pink)"></span><span class="nl">RAPDAD Radio</span><span class="cb cbg-p" id="cnt-radio"></span></button>
+    <button class="nb" onclick="go('employee')"><span class="nd" style="background:var(--orange)"></span><span class="nl">RAPDAD Employee</span><span class="cb cbg-o" id="cnt-employee"></span></button>
+    <button class="nb" onclick="go('sgauge')"><span class="nd" style="background:var(--purple)"></span><span class="nl">5Gauge</span><span class="cb cbg-v" id="cnt-sgauge"></span></button>
+    <button class="nb" onclick="go('brandbible')"><span class="nd" style="background:var(--orange)"></span><span class="nl">Brand Bible</span></button>
+    <button class="nb" onclick="go('insider')"><span class="nd" style="background:var(--green)"></span><span class="nl">Insider Circle</span></button>
+
+    <div class="sb-glabel">Operations</div>
+    <button class="nb" onclick="go('content')"><span class="nd" style="background:var(--yellow)"></span><span class="nl">Content</span><span class="cb cbg-y" id="cnt-content"></span></button>
+    <button class="nb" onclick="go('admin')"><span class="nd" style="background:var(--green)"></span><span class="nl">Admin</span><span class="cb cbg-g" id="cnt-admin"></span></button>
+    <button class="nb" onclick="go('weekly')"><span class="nd" style="background:var(--muted)"></span><span class="nl">Weekly Focus</span></button>
+    <button class="nb" onclick="go('budget')"><span class="nd" style="background:var(--muted)"></span><span class="nl">Budget</span></button>
+  </nav>
+  <div class="sb-bot">
+    <div class="sb-meta" id="wklabel">Week of —</div>
+    <div id="npillwrap"></div>
+    <div class="save-row">
+      <span class="sf" id="saveflash">&#10003; saved</span>
+      <button class="rb" onclick="resetAll()">reset</button>
+    </div>
+  </div>
+</aside>
+
+<!-- ══ MAIN ════════════════════════════════════════════════════ -->
+<main class="main">
+  <div class="topbar">
+    <div class="tb-left">
+      <div class="tb-title" id="ptitle">Dashboard</div>
+      <div class="tb-sub" id="psub">Everything in one place</div>
+    </div>
+    <div class="tb-right" id="datedisp"></div>
+  </div>
+
+  <div class="wstrip" id="wstrip"></div>
+
+  <div class="content">
+
+    <!-- ═ OVERVIEW ════════════════════════════════════════════ -->
+    <div class="panel active" id="panel-overview">
+
+      <!-- TODAY — Autopilot (Sick Day Protocol) -->
+      <div class="card" style="border-left:3px solid var(--pink);">
+        <div class="ch">
+          <h2>Today — Autopilot Mode</h2>
+          <span class="cbg cbg-p">Sick Day Protocol</span>
+          <span id="apProgress" style="margin-left:8px;font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.05em;"></span>
+        </div>
+        <p style="font-size:12px;color:var(--dim);margin-bottom:14px;font-style:italic;line-height:1.5;">
+          Rule: Zero decision fatigue. Execute what's listed, skip what requires energy you don't have, don't add new tasks.
+        </p>
+
+        <div class="sdiv" style="margin-top:6px;">Morning · Low Energy / Passive Work</div>
+        <p style="font-size:11px;color:var(--muted);margin:-4px 0 8px;">Body's out. Brain is foggy. Do the stuff that doesn't require you to think.</p>
+        <ul class="cl">
+          <li><input type="checkbox" data-key="tdy_vegas_organize"><label>Dump Vegas footage/photos — organize into folders by day/theme. Don't edit yet.<span class="note">Vegas content</span></label><span class="ptag ptag-n">passive</span></li>
+          <li><input type="checkbox" data-key="tdy_oz_text"><label>Text/DM OZ to lock May 9 &amp; 11 (Fort Collins)<span class="note">RAPDAD EMPLOYEE</span></label><span class="ptag ptag-n">passive</span></li>
+          <li><input type="checkbox" data-key="tdy_austin_text"><label>Text Austin Toker's camp to confirm May 23 (Co Springs)<span class="note">RAPDAD EMPLOYEE</span></label><span class="ptag ptag-n">passive</span></li>
+          <li><input type="checkbox" data-key="tdy_errupt_outreach"><label>Reach out to E.R.R.U.P.T. management NOW — get a yes/no on out-of-state interview today or tomorrow<span class="note">RAPDAD RADIO</span></label><span class="ptag ptag-h">today</span></li>
+          <li><input type="checkbox" data-key="tdy_protools"><label>Pay for Pro Tools — one task, done, unblocked<span class="note">ARTISTRY</span></label><span class="ptag ptag-h">unblocker</span></li>
+        </ul>
+
+        <div class="sdiv" style="margin-top:18px;">Afternoon · Medium Focus Window</div>
+        <p style="font-size:11px;color:var(--muted);margin:-4px 0 8px;">If you get a clarity window, use it here.</p>
+        <ul class="cl">
+          <li><input type="checkbox" data-key="tdy_rapclass_walkthrough"><label>Solo walkthrough of RAPCLASS site — take friction notes. Don't loop in Kayeno/DDubb yet.<span class="note">RAPCLASS · test it yourself first</span></label><span class="ptag ptag-s">focus</span></li>
+          <li><input type="checkbox" data-key="tdy_rapclass_outreach_draft"><label>Draft outreach to Nikki Swarn &amp; Hypnautic — DON'T send until you've done the test run<span class="note">RAPCLASS</span></label><span class="ptag ptag-s">draft</span></li>
+          <li><input type="checkbox" data-key="tdy_carrie_schedule"><label>Schedule Carrie's interview — pick a time before May 11 (Mother's Day deadline)<span class="note">RAPDAD RADIO</span></label><span class="ptag ptag-h">today</span></li>
+          <li><input type="checkbox" data-key="tdy_vegas_postedit"><label>Light edit on 3–5 Vegas photos for one quick post. Short caption. Done.<span class="note">VEGAS CONTENT · Married in Vegas</span></label><span class="ptag ptag-s">light</span></li>
+        </ul>
+
+        <div class="sdiv" style="margin-top:18px;">Evening · Only If You Have It</div>
+        <p style="font-size:11px;color:var(--muted);margin:-4px 0 8px;">If you're drained, skip this entirely. Rest is production.</p>
+        <ul class="cl">
+          <li><input type="checkbox" data-key="tdy_troy_outreach"><label>Draft &amp; send Troy Good outreach — verse request, context, timeline<span class="note">ARTISTRY · sooner sent, sooner returned</span></label><span class="ptag ptag-s">if energy</span></li>
+          <li><input type="checkbox" data-key="tdy_loralee_roughcut"><label>Start a rough cut on Loralee's interview. If not, leave it.<span class="note">RAPDAD RADIO</span></label><span class="ptag ptag-s">if energy</span></li>
+        </ul>
+      </div>
+
+      <!-- Pillar Priority Stack + Hard Deadlines -->
+      <div class="g2">
+        <div class="card av">
+          <div class="ch"><h2>Pillar priority stack — this week</h2><span class="cbg cbg-v">Stack</span></div>
+          <ul class="pl">
+            <li class="pr"><div class="pnum" style="background:var(--purple-bg);color:var(--purple);">1</div><div style="flex:1;"><div style="color:var(--white);font-size:13px;font-weight:500;">Artistry</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">Pro Tools paid → Troy Good verse → mixing → distro</div></div></li>
+            <li class="pr"><div class="pnum" style="background:var(--pink-bg);color:var(--pink);">2</div><div style="flex:1;"><div style="color:var(--white);font-size:13px;font-weight:500;">Rapdad Radio</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">Carrie filmed → both edited → Mother's Day drop</div></div></li>
+            <li class="pr"><div class="pnum" style="background:var(--orange-bg);color:var(--orange);">3</div><div style="flex:1;"><div style="color:var(--white);font-size:13px;font-weight:500;">Employee</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">OZ dates locked, Austin Toker confirmed</div></div></li>
+            <li class="pr"><div class="pnum" style="background:var(--blue-bg);color:var(--blue);">4</div><div style="flex:1;"><div style="color:var(--white);font-size:13px;font-weight:500;">RAPCLASS</div><div style="font-size:11px;color:var(--muted);margin-top:2px;">Solo test run → notes → Nikki + Hypnautic outreach</div></div></li>
+          </ul>
+        </div>
+        <div class="card" style="border-left:3px solid var(--pink);">
+          <div class="ch"><h2>Hard deadlines</h2><span class="cbg cbg-p">Lock</span></div>
+          <ul class="cl">
+            <li><label><span style="color:var(--pink);font-weight:700;letter-spacing:.04em;font-size:11px;text-transform:uppercase;">Today / Tomorrow</span><span class="note" style="font-style:normal;">E.R.R.U.P.T. interview decision</span></label></li>
+            <li><label><span style="color:var(--orange);font-weight:700;letter-spacing:.04em;font-size:11px;text-transform:uppercase;">May 9 &amp; 11</span><span class="note" style="font-style:normal;">OZ music video shoot — Fort Collins</span></label></li>
+            <li><label><span style="color:var(--pink);font-weight:700;letter-spacing:.04em;font-size:11px;text-transform:uppercase;">~ May 10</span><span class="note" style="font-style:normal;">Carrie interview filmed (buffer before Mother's Day)</span></label></li>
+            <li><label><span style="color:var(--pink);font-weight:700;letter-spacing:.04em;font-size:11px;text-transform:uppercase;">May 11</span><span class="note" style="font-style:normal;">Both Radio interviews edited &amp; scheduled to drop</span></label></li>
+            <li><label><span style="color:var(--orange);font-weight:700;letter-spacing:.04em;font-size:11px;text-transform:uppercase;">May 23</span><span class="note" style="font-style:normal;">Austin Toker recap — Co Springs</span></label></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="sgrid" id="ovgrid"></div>
+      <div class="card ao">
+        <div class="ch"><h2>🔥 Hot right now</h2><span class="cbg cbg-o">Priority</span></div>
+        <ul class="cl" id="hotlist"></ul>
+      </div>
+      <div class="g2">
+        <div class="card">
+          <div class="ch"><h2>This week's top 3</h2></div>
+          <ul class="pl">
+            <li class="pr"><div class="pnum" style="background:var(--pink-bg);color:var(--pink);">1</div><input type="text" data-key="w_p1" placeholder="Top priority..." /></li>
+            <li class="pr"><div class="pnum" style="background:var(--orange-bg);color:var(--orange);">2</div><input type="text" data-key="w_p2" placeholder="Second priority..." /></li>
+            <li class="pr"><div class="pnum" style="background:var(--s3);color:var(--muted);">3</div><input type="text" data-key="w_p3" placeholder="Third priority..." /></li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="ch"><h2>Quick notes</h2></div>
+          <textarea data-key="ov_notes" style="min-height:110px;" placeholder="Brain dump, reminders, anything..."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═ RAPCLASS ════════════════════════════════════════════ -->
+    <div class="panel" id="panel-rapclass">
+      <div class="card ab">
+        <div class="ch"><h2>Platform build</h2><span class="cbg cbg-b">Business</span></div>
+        <ul class="cl">
+          <li><input type="checkbox" data-key="rc_1"><label>Edit website / app / html / index files</label></li>
+          <li><input type="checkbox" data-key="rc_2"><label>Update PDF Workbook design</label></li>
+          <li><input type="checkbox" data-key="rc_3"><label>Update GUI — sleek / men-in-black appeal</label></li>
+          <li><input type="checkbox" data-key="rc_4"><label>Add Vulnerability Call-to-Action for potential hackers</label></li>
+          <li><input type="checkbox" data-key="rc_5"><label>Embed intro video for main framework &amp; lessons</label></li>
+          <li><input type="checkbox" data-key="rc_6"><label>Add Google Auth &amp; AI integration when live hosted</label></li>
+          <li><input type="checkbox" data-key="rc_7"><label>Make sidebar begin as closed drawer</label></li>
+          <li><input type="checkbox" data-key="rc_8"><label>Simplified language across entire structure<span class="note">Accessibility &amp; clarity</span></label></li>
+          <li><input type="checkbox" data-key="rc_9"><label>Quiz-like gated structure on all Worksheets &amp; Guides</label></li>
+          <li><input type="checkbox" data-key="rc_10"><label>Structure mainframe &amp; curriculum for YouTube channel</label></li>
+          <li><input type="checkbox" data-key="rc_11"><label>Film / edit classes</label></li>
+          <li><input type="checkbox" data-key="rc_12"><label>Run as local app</label></li>
+        </ul>
+      </div>
+      <div class="g2">
+        <div class="card ab">
+          <div class="ch"><h2>Test run artists</h2><span class="cbg cbg-b">Beta (3–4)</span></div>
+          <ul class="cl">
+            <li><input type="checkbox" data-key="rc_hyp"><label>Hyp</label></li>
+            <li><input type="checkbox" data-key="rc_tef"><label>Tef</label></li>
+            <li><input type="checkbox" data-key="rc_nikki"><label>Nikki</label></li>
+            <li><input type="checkbox" data-key="rc_4th"><label>4th artist (TBD)</label></li>
+          </ul>
+          <div class="fg" style="margin-top:12px;"><div class="fl">Beta notes</div><textarea data-key="rc_beta_notes" placeholder="Feedback, session notes, next steps..."></textarea></div>
+        </div>
+        <div class="card">
+          <div class="ch"><h2>Grants &amp; funding</h2></div>
+          <ul class="cl">
+            <li><input type="checkbox" data-key="rc_grant_research"><label>Research grant opportunities</label></li>
+            <li><input type="checkbox" data-key="rc_grant_apply"><label>Apply for grants</label></li>
+            <li><input type="checkbox" data-key="rc_grant_followup"><label>Follow up on applications</label></li>
+          </ul>
+          <div class="fg" style="margin-top:12px;"><div class="fl">Grant notes</div><textarea data-key="rc_grant_notes" placeholder="Grant names, deadlines, amounts..."></textarea></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h2>Links &amp; dev notes</h2></div>
+        <div class="lrow"><span class="lnote">Live site</span><a href="https://rapdad55.github.io/RAPCLASS/" target="_blank">rapdad55.github.io/RAPCLASS</a></div>
+        <div style="margin-top:12px;"><div class="fl">Dev notes / blockers</div><textarea data-key="rc_dev_notes" placeholder="Dev notes, blockers, ideas..."></textarea></div>
+      </div>
+    </div>
+
+    <!-- ═ RAPDAD RADIO ══════════════════════════════════════════ -->
+    <div class="panel" id="panel-radio">
+      <div class="card ap">
+        <div class="ch"><h2>Edit &amp; post queue</h2><span class="cbg cbg-p">Growth</span></div>
+        <ul class="cl">
+          <li><input type="checkbox" data-key="rd_roundtable"><label>Edit / Post Roundtable</label></li>
+          <li><input type="checkbox" data-key="rd_kmac"><label>Finish posting KMAC</label></li>
+          <li><input type="checkbox" data-key="rd_carrie"><label>Film Carrie<span class="note">Mother's Day</span></label></li>
+          <li><input type="checkbox" data-key="rd_loralee"><label>Finish editing Loralee<span class="note">Mother's Day</span></label></li>
+          <li><input type="checkbox" data-key="rd_dank"><label>Edit DANK</label></li>
+          <li><input type="checkbox" data-key="rd_dimedee"><label>Edit DIMEDEE</label></li>
+          <li><input type="checkbox" data-key="rd_2eazy"><label>Edit 2Eazy</label></li>
+          <li><input type="checkbox" data-key="rd_roman"><label>Film Roman</label></li>
+          <li><input type="checkbox" data-key="rd_jenae"><label>Film Jenae</label></li>
+        </ul>
+      </div>
+      <div class="g2">
+        <div class="card"><div class="ch"><h2>Production notes</h2></div><textarea data-key="rd_prod_notes" style="min-height:130px;" placeholder="Edit status, footage notes, deadlines, upload checklist..."></textarea></div>
+        <div class="card"><div class="ch"><h2>Interview pipeline</h2></div><textarea data-key="rd_pipeline" style="min-height:130px;" placeholder="Artist · status · date · platform · notes..."></textarea></div>
+      </div>
+    </div>
+
+    <!-- ═ RAPDAD EMPLOYEE ══════════════════════════════════════ -->
+    <div class="panel" id="panel-employee">
+      <div class="card ao">
+        <div class="ch"><h2>Active client work</h2><span class="cbg cbg-o">Paid</span></div>
+        <ul class="cl">
+          <li><input type="checkbox" data-key="emp_nakai1"><label>Mix NAKAI — session 1<span class="note">x2 sessions total</span></label></li>
+          <li><input type="checkbox" data-key="emp_nakai2"><label>Mix NAKAI — session 2</label></li>
+          <li><input type="checkbox" data-key="emp_flost"><label>Fix FLOST8ION 4/20 set</label></li>
+          <li><input type="checkbox" data-key="emp_tokerfest"><label>TOKERFEST video recap — $250<span class="note">Dual cam vertical + horizontal + photoshoot</span></label></li>
+          <li><input type="checkbox" data-key="emp_2eazy_shoot"><label>Infamous 2Eazy photoshoot on stage</label></li>
+          <li><input type="checkbox" data-key="emp_kooya"><label>Get KOOYA on 20 v 1</label></li>
+          <li><input type="checkbox" data-key="emp_birthday"><label>Birthday business board meeting</label></li>
+        </ul>
+      </div>
+      <div class="card ao">
+        <div class="ch"><h2>Pricing cards to update</h2><span class="cbg cbg-o">Admin</span></div>
+        <ul class="cl">
+          <li><input type="checkbox" data-key="pc_mini"><label>Mini-Management Consultations<span class="note">Create card → rapdad55.github.io/RAPCLASS/</span></label></li>
+          <li><input type="checkbox" data-key="pc_recording"><label>Recording / Engineering — Tracking + Mixing</label></li>
+          <li><input type="checkbox" data-key="pc_fullprod"><label>Full Song Production — Beat + Recording + Execution</label></li>
+          <li><input type="checkbox" data-key="pc_mv"><label>Music Video — Performance / Concept Video</label></li>
+          <li><input type="checkbox" data-key="pc_shortform"><label>Short-Form Content — Reels / TikTok Clips</label></li>
+          <li><input type="checkbox" data-key="pc_interviews"><label>Artist Interviews / RapDad Radio</label></li>
+          <li><input type="checkbox" data-key="pc_event"><label>Event Recap — Concerts / Parties / Shows</label></li>
+          <li><input type="checkbox" data-key="pc_photo"><label>Photography — Shoots / Branding / Lifestyle</label></li>
+          <li><input type="checkbox" data-key="pc_dev"><label>Ongoing Artist Development — High-Value Clients</label></li>
+        </ul>
+      </div>
+      <div class="card"><div class="ch"><h2>Client notes</h2></div><textarea data-key="emp_notes" style="min-height:100px;" placeholder="Client · project · rate · deadline · status..."></textarea></div>
+    </div>
+
+    <!-- ═ 5GAUGE ════════════════════════════════════════════════ -->
+    <div class="panel" id="panel-sgauge">
+      <div class="card av">
+        <div class="ch"><h2>Music &amp; recording</h2><span class="cbg cbg-v">Artistry</span></div>
+        <ul class="cl">
+          <li><input type="checkbox" data-key="sg_rec"><label>Finish recording / get features<span class="note">Film Co Springs — Troy Good</span></label></li>
+          <li><input type="checkbox" data-key="sg_seif"><label>SEIF Major collab stream?</label></li>
+          <li><input type="checkbox" data-key="sg_ego"><label>EGO DEATH / BLOKARADO brand collabs</label></li>
+          <li><input type="checkbox" data-key="sg_barbers"><label>Barbershops / tattoo shops collabs</label></li>
+          <li><input type="checkbox" data-key="sg_sync"><label>Sync license — Marvel / action song</label></li>
+          <li><input type="checkbox" data-key="sg_hair"><label>Cut hair? / Makeover / refresh style</label></li>
+          <li><input type="checkbox" data-key="sg_videos"><label>Shoot all videos</label></li>
+          <li><input type="checkbox" data-key="sg_cover"><label>Cover art — "5G" / Same Ol' G</label></li>
+        </ul>
+      </div>
+      <div class="g2">
+        <div class="card av">
+          <div class="ch"><h2>Brand &amp; business</h2></div>
+          <ul class="cl">
+            <li><input type="checkbox" data-key="sg_brand"><label>Brand Bible .html</label></li>
+            <li><input type="checkbox" data-key="sg_insider"><label>Insider Circle .html<span class="note">$3,500 packaging / crowd-funding</span></label></li>
+            <li><input type="checkbox" data-key="sg_bandcamp"><label>Bandcamp / Pre-Save / Earnin' / Direct-to-Consumer</label></li>
+            <li><input type="checkbox" data-key="sg_qoncert"><label>QONCERT awards</label></li>
+            <li><input type="checkbox" data-key="sg_plod"><label>PLOD Show — May</label></li>
+          </ul>
+        </div>
+        <div class="card">
+          <div class="ch"><h2>Progress</h2></div>
+          <div class="prog"><div class="ph"><span class="pn">Recording complete</span><div class="pp"><input type="number" id="pct-sgrec" data-key="pct_sgrec" min="0" max="100" value="0" oninput="bar('sgrec',this.value,'var(--purple)')"><span>%</span></div></div><div class="bt"><div class="bf" id="bar-sgrec" style="background:var(--purple);width:0%"></div></div></div>
+          <div class="prog"><div class="ph"><span class="pn">Videos shot</span><div class="pp"><input type="number" id="pct-sgvid" data-key="pct_sgvid" min="0" max="100" value="0" oninput="bar('sgvid',this.value,'var(--blue)')"><span>%</span></div></div><div class="bt"><div class="bf" id="bar-sgvid" style="background:var(--blue);width:0%"></div></div></div>
+          <div class="prog"><div class="ph"><span class="pn">Brand assets done</span><div class="pp"><input type="number" id="pct-sgbrand" data-key="pct_sgbrand" min="0" max="100" value="0" oninput="bar('sgbrand',this.value,'var(--pink)')"><span>%</span></div></div><div class="bt"><div class="bf" id="bar-sgbrand" style="background:var(--pink);width:0%"></div></div></div>
+          <div class="fg" style="margin-top:14px;"><div class="fl">Notes</div><textarea data-key="sg_notes" placeholder="Track ideas, collab status, promo plan..."></textarea></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═ CONTENT ══════════════════════════════════════════════ -->
+    <div class="panel" id="panel-content">
+      <div class="card ay">
+        <div class="ch"><h2>Content queue — not radio</h2><span class="cbg cbg-y">Growth</span></div>
+        <ul class="cl">
+          <li><input type="checkbox" data-key="con_roundtable"><label>Roundtable interview</label></li>
+          <li><input type="checkbox" data-key="con_album"><label>Album song content</label></li>
+          <li><input type="checkbox" data-key="con_ralfy"><label>Ralfy the Plug show recap</label></li>
+          <li><input type="checkbox" data-key="con_420"><label>4/20 TOKERFEST recap</label></li>
+          <li><input type="checkbox" data-key="con_bangz"><label>Free music video for Bangz</label></li>
+        </ul>
+      </div>
+      <div class="g2">
+        <div class="card"><div class="ch"><h2>Edit status</h2></div><textarea data-key="con_edit" style="min-height:120px;" placeholder="Piece · status · platform · deadline · notes..."></textarea></div>
+        <div class="card"><div class="ch"><h2>Ideas &amp; backlog</h2></div><textarea data-key="con_ideas" style="min-height:120px;" placeholder="Content ideas, formats, platforms, collabs..."></textarea></div>
+      </div>
+    </div>
+
+    <!-- ═ ADMIN ════════════════════════════════════════════════ -->
+    <div class="panel" id="panel-admin">
+      <div class="g2">
+        <div class="card ag">
+          <div class="ch"><h2>Life ops</h2><span class="cbg cbg-g">Admin</span></div>
+          <ul class="cl">
+            <li><input type="checkbox" data-key="adm_hdd"><label>Organize hard drive</label></li>
+            <li><input type="checkbox" data-key="adm_email"><label>Clean email</label></li>
+            <li><input type="checkbox" data-key="adm_cal"><label>Schedule / calendar up to date</label></li>
+            <li><input type="checkbox" data-key="adm_work"><label>Find work</label></li>
+            <li><input type="checkbox" data-key="adm_house"><label>House / life optimization</label></li>
+          </ul>
+        </div>
+        <div class="card ay">
+          <div class="ch"><h2>People</h2><span class="cbg cbg-y">Human</span></div>
+          <ul class="cl">
+            <li><input type="checkbox" data-key="adm_simone"><label>Simone</label></li>
+            <li><input type="checkbox" data-key="adm_nellie"><label>Nellie</label></li>
+            <li><input type="checkbox" data-key="adm_vinny"><label>Vinny jewelry page</label></li>
+          </ul>
+          <div class="fg" style="margin-top:12px;"><div class="fl">Notes</div><textarea data-key="adm_people_notes" placeholder="Check-ins, tasks, important dates..."></textarea></div>
+        </div>
+      </div>
+      <div class="card"><div class="ch"><h2>Admin notes</h2></div><textarea data-key="adm_notes" style="min-height:100px;" placeholder="Appointments, tasks, reminders, follow-ups..."></textarea></div>
+    </div>
+
+    <!-- ═ WEEKLY FOCUS ══════════════════════════════════════════ -->
+    <div class="panel" id="panel-weekly">
+      <div class="card ay">
+        <div class="ch"><h2>Weekly intention</h2><span class="cbg cbg-y">Human</span></div>
+        <textarea data-key="wk_intention" style="min-height:72px;" placeholder="What does winning this week look like? What's the one non-negotiable?"></textarea>
+      </div>
+      <div class="sdiv">Daily focus blocks</div>
+      <div id="wkdays"></div>
+      <div class="card">
+        <div class="ch"><h2>End of week review</h2></div>
+        <div class="g2">
+          <div class="fg"><div class="fl">What worked</div><textarea data-key="wk_wins" placeholder="Wins, momentum, breakthroughs..."></textarea></div>
+          <div class="fg"><div class="fl">What to fix</div><textarea data-key="wk_fix" placeholder="Blockers, friction, adjustments..."></textarea></div>
+        </div>
+        <div class="fg"><div class="fl">Next week setup</div><textarea data-key="wk_next" placeholder="Prep tasks, carry-overs, goals for next week..."></textarea></div>
+      </div>
+    </div>
+
+    <!-- ═ BUDGET ════════════════════════════════════════════════ -->
+    <div class="panel" id="panel-budget">
+      <div class="g3">
+        <div class="card">
+          <div class="ch"><h2>Housing &amp; utilities</h2></div>
+          <ul class="bl">
+            <li class="br"><span class="bc">Rent</span><span class="ba"><input type="text" data-key="b_rent" value="$1,600"/></span></li>
+            <li class="br"><span class="bc">Save for apt</span><span class="ba"><input type="text" data-key="b_save_apt" value="$300"/></span></li>
+            <li class="br"><span class="bc">Electric/Gas</span><span class="ba"><input type="text" data-key="b_electric" value="$100"/></span></li>
+            <li class="br"><span class="bc">Cell/Phones</span><span class="ba"><input type="text" data-key="b_cell" value="$100"/></span></li>
+            <li class="br"><span class="bc">Streaming</span><span class="ba"><input type="text" data-key="b_streaming" value="$60"/></span></li>
+            <li class="br"><span class="bc">Hygiene</span><span class="ba"><input type="text" data-key="b_hygiene" value="$100"/></span></li>
+          </ul>
+          <div class="btot"><span>Total</span><span>$2,260</span></div>
+        </div>
+        <div class="card">
+          <div class="ch"><h2>Food &amp; transport</h2></div>
+          <ul class="bl">
+            <li class="br"><span class="bc">Groceries</span><span class="ba"><input type="text" data-key="b_groceries" value="$800"/></span></li>
+            <li class="br"><span class="bc">Starbucks</span><span class="ba"><input type="text" data-key="b_starbucks" value="$100"/></span></li>
+            <li class="br"><span class="bc">Takeout</span><span class="ba"><input type="text" data-key="b_takeout" value="$400"/></span></li>
+            <li class="br"><span class="bc">Restaurants</span><span class="ba"><input type="text" data-key="b_restaurants" value="$400"/></span></li>
+            <li class="br"><span class="bc">Carts</span><span class="ba"><input type="text" data-key="b_carts" value="$100"/></span></li>
+            <li class="br"><span class="bc">Car payment</span><span class="ba"><input type="text" data-key="b_car" value="$600"/></span></li>
+            <li class="br"><span class="bc">Gas</span><span class="ba"><input type="text" data-key="b_gas" value="$200"/></span></li>
+            <li class="br"><span class="bc">Registration</span><span class="ba"><input type="text" data-key="b_reg" value="$100"/></span></li>
+          </ul>
+          <div class="btot"><span>Total</span><span>$2,700</span></div>
+        </div>
+        <div class="card">
+          <div class="ch"><h2>Wellness &amp; family</h2><span class="cbg cbg-y">Human</span></div>
+          <ul class="bl">
+            <li class="br"><span class="bc">Gym</span><span class="ba"><input type="text" data-key="b_gym" value="$35"/></span></li>
+            <li class="br"><span class="bc">Massage</span><span class="ba"><input type="text" data-key="b_massage" value="$150"/></span></li>
+            <li class="br"><span class="bc">Facials</span><span class="ba"><input type="text" data-key="b_facials" value="$320"/></span></li>
+            <li class="br"><span class="bc">Hair care</span><span class="ba"><input type="text" data-key="b_hair" value="$100"/></span></li>
+            <li class="br"><span class="bc">Tattoos</span><span class="ba"><input type="text" data-key="b_tattoos" value="$100"/></span></li>
+            <li class="br"><span class="bc">Medical</span><span class="ba"><input type="text" data-key="b_medical" value="$100"/></span></li>
+            <li class="br"><span class="bc">Nellie daily</span><span class="ba"><input type="text" data-key="b_nellie" value="$500"/></span></li>
+            <li class="br"><span class="bc">Child support</span><span class="ba"><input type="text" data-key="b_cs" value="$400"/></span></li>
+          </ul>
+          <div class="btot"><span>Total</span><span>$1,705</span></div>
+        </div>
+      </div>
+      <div class="g3">
+        <div class="card">
+          <div class="ch"><h2>Debt</h2></div>
+          <ul class="bl">
+            <li class="br"><span class="bc">CS arrears</span><span class="ba"><input type="text" data-key="bd_csa" placeholder="$—"/></span></li>
+            <li class="br"><span class="bc">Aspen Bank</span><span class="ba"><input type="text" data-key="bd_aspen" placeholder="$—"/></span></li>
+            <li class="br"><span class="bc">Climb Credit</span><span class="ba"><input type="text" data-key="bd_climb" placeholder="$—"/></span></li>
+            <li class="br"><span class="bc">Better Cars</span><span class="ba"><input type="text" data-key="bd_cars" placeholder="$—"/></span></li>
+            <li class="br"><span class="bc">Huntington</span><span class="ba"><input type="text" data-key="bd_hunt" placeholder="$—"/></span></li>
+            <li class="br"><span class="bc">Wells Fargo</span><span class="ba"><input type="text" data-key="bd_wells" placeholder="$—"/></span></li>
+            <li class="br"><span class="bc">Harmony</span><span class="ba"><input type="text" data-key="bd_harmony" placeholder="$—"/></span></li>
+            <li class="br"><span class="bc">New Age</span><span class="ba"><input type="text" data-key="bd_newage" placeholder="$—"/></span></li>
+          </ul>
+          <div class="fg" style="margin-top:10px;"><div class="fl">Payment notes</div><textarea data-key="bd_notes" placeholder="Amounts, due dates..."></textarea></div>
+        </div>
+        <div class="card">
+          <div class="ch"><h2>Music &amp; biz costs</h2><span class="cbg cbg-v">Artistry</span></div>
+          <ul class="bl">
+            <li class="br"><span class="bc">Beats/samples</span><span class="ba"><input type="text" data-key="bm_beats" placeholder="$—"/></span></li>
+            <li class="br"><span class="bc">Studio time</span><span class="ba"><input type="text" data-key="bm_studio" placeholder="$—"/></span></li>
+            <li class="br"><span class="bc">Mixing/mastering</span><span class="ba"><input type="text" data-key="bm_mixing" placeholder="$—"/></span></li>
+            <li class="br"><span class="bc">Cover art</span><span class="ba"><input type="text" data-key="bm_cover" placeholder="$—"/></span></li>
+            <li class="br"><span class="bc">Videos</span><span class="ba"><input type="text" data-key="bm_videos" placeholder="$—"/></span></li>
+            <li class="br"><span class="bc">Equipment</span><span class="ba"><input type="text" data-key="bm_equip" placeholder="$—"/></span></li>
+          </ul>
+          <div class="fg" style="margin-top:10px;"><div class="fl">This month's music spend</div><input type="text" data-key="bm_total" placeholder="$0"/></div>
+        </div>
+        <div class="card">
+          <div class="ch"><h2>Mgmt &amp; taxes</h2><span class="cbg cbg-b">Business</span></div>
+          <ul class="bl">
+            <li class="br"><span class="bc">LLC (annual)</span><span class="ba"><input type="text" data-key="bt_llc" placeholder="$—"/></span></li>
+            <li class="br"><span class="bc">Accountant</span><span class="ba"><input type="text" data-key="bt_accountant" value="$150"/></span></li>
+            <li class="br"><span class="bc">Distribution</span><span class="ba"><input type="text" data-key="bt_distro" placeholder="$—"/></span></li>
+            <li class="br"><span class="bc">Hosting/tools</span><span class="ba"><input type="text" data-key="bt_hosting" placeholder="$—"/></span></li>
+            <li class="br"><span class="bc">Savings — Nellie</span><span class="ba"><input type="text" data-key="bt_snellie" value="$100"/></span></li>
+            <li class="br"><span class="bc">Savings — Simone</span><span class="ba"><input type="text" data-key="bt_ssimone" value="$100"/></span></li>
+          </ul>
+          <div class="fg" style="margin-top:10px;"><div class="fl">Tax/LLC notes</div><textarea data-key="bt_notes" placeholder="LLC status, filing deadlines..."></textarea></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="ch"><h2>Monthly income snapshot</h2><span class="cbg cbg-g">Net</span></div>
+        <div class="g2">
+          <div>
+            <div class="ir"><span class="irlb">Day job (monthly net)</span><div class="irv"><span>$</span><input type="number" data-key="bi_job" placeholder="0"/></div></div>
+            <div class="ir"><span class="irlb">Side work</span><div class="irv"><span>$</span><input type="number" data-key="bi_side" placeholder="0"/></div></div>
+            <div class="ir"><span class="irlb">RAPCLASS / music</span><div class="irv"><span>$</span><input type="number" data-key="bi_rc" placeholder="0"/></div></div>
+            <div class="ir"><span class="irlb">RAPDAD Radio</span><div class="irv"><span>$</span><input type="number" data-key="bi_radio" placeholder="0"/></div></div>
+          </div>
+          <div>
+            <div class="metric" style="margin-bottom:10px;"><div class="ml">Fixed expenses est.</div><div class="mv">~$6,665+</div><div class="ms">housing + food + transport + wellness + family</div></div>
+            <div class="fl">Notes</div>
+            <textarea data-key="bi_notes" placeholder="Adjustments, windfalls, unexpected costs..."></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═ BRAND BIBLE ═══════════════════════════════════════════ -->
+    <div class="panel" id="panel-brandbible">
+      <style>
+        /* Brand Bible scoped styles */
+        #panel-brandbible { padding: 0 !important; }
+        .bb-wrap { font-family: 'Space Mono', monospace; background: var(--black); color: #d4dce6; }
+        .bb-cover {
+          min-height: 60vh; display: flex; flex-direction: column; justify-content: center;
+          padding: 60px 40px; position: relative;
+          background: linear-gradient(135deg, #0a0a0a 0%, #111218 40%, #1e3a5f 100%);
+          overflow: hidden;
+        }
+        .bb-cover::after {
+          content: 'SGAUGE'; position: absolute; right: -40px; top: 50%;
+          transform: translateY(-50%) rotate(90deg);
+          font-family: 'Bebas Neue', sans-serif; font-size: 160px;
+          color: rgba(255,255,255,0.02); letter-spacing: 20px; white-space: nowrap; pointer-events: none;
+        }
+        .bb-eyebrow { font-size: 10px; letter-spacing: 4px; color: #c8a96e; text-transform: uppercase; margin-bottom: 18px; }
+        .bb-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(52px, 8vw, 100px); line-height: 0.9; color: #e8edf2; letter-spacing: 4px; margin-bottom: 8px; }
+        .bb-title span { color: #c8a96e; }
+        .bb-subtitle { font-family: 'DM Serif Display', serif; font-style: italic; font-size: clamp(15px, 2.5vw, 22px); color: #b8c6d6; margin-bottom: 36px; }
+        .bb-tagline { font-size: 11px; letter-spacing: 2px; color: #8a9bb0; border-left: 2px solid #c8a96e; padding-left: 14px; max-width: 440px; }
+        .bb-meta { font-size: 10px; letter-spacing: 3px; color: #8a9bb0; text-transform: uppercase; margin-top: 30px; }
+        .bb-section { padding: 48px 40px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .bb-section:nth-child(even) { background: #111218; }
+        .bb-slabel { font-size: 10px; letter-spacing: 5px; color: #c8a96e; text-transform: uppercase; margin-bottom: 28px; display: flex; align-items: center; gap: 10px; }
+        .bb-slabel::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, #8a6f3e, transparent); max-width: 180px; }
+        .bb-stitle { font-family: 'Bebas Neue', sans-serif; font-size: clamp(32px, 5vw, 56px); line-height: 1; color: #e8edf2; letter-spacing: 2px; margin-bottom: 24px; }
+        .bb-archgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-top: 28px; }
+        .bb-archcard { background: #1a1d26; padding: 26px; position: relative; overflow: hidden; transition: background 0.3s; }
+        .bb-archcard:hover { background: #2a2f3e; }
+        .bb-archcard::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: #c8a96e; }
+        .bb-archcard-label { font-size: 9px; letter-spacing: 4px; color: #c8a96e; text-transform: uppercase; margin-bottom: 8px; }
+        .bb-archcard-title { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: #e8edf2; letter-spacing: 2px; margin-bottom: 8px; }
+        .bb-archcard p { color: #b8c6d6; font-size: 12px; line-height: 1.8; }
+        .bb-quote { background: #1e3a5f; border-left: 4px solid #c8a96e; padding: 32px 40px; margin: 36px 0; position: relative; }
+        .bb-quote::before { content: '"'; position: absolute; top: -14px; left: 24px; font-family: 'DM Serif Display', serif; font-size: 90px; color: #c8a96e; opacity: 0.3; line-height: 1; }
+        .bb-quote p { font-family: 'DM Serif Display', serif; font-size: clamp(15px, 2vw, 20px); font-style: italic; color: #e8edf2; line-height: 1.5; position: relative; z-index: 1; }
+        .bb-quote cite { display: block; margin-top: 12px; font-size: 10px; letter-spacing: 3px; color: #c8a96e; text-transform: uppercase; font-style: normal; }
+        .bb-arctimeline { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-top: 28px; }
+        .bb-arcphase { background: #1a1d26; padding: 28px 22px; position: relative; overflow: hidden; }
+        .bb-arcphase::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #c8a96e, transparent); }
+        .bb-arcnum { font-family: 'Bebas Neue', sans-serif; font-size: 52px; color: rgba(200,169,110,0.15); line-height: 1; margin-bottom: 4px; }
+        .bb-arclabel { font-size: 9px; letter-spacing: 4px; color: #c8a96e; text-transform: uppercase; margin-bottom: 10px; }
+        .bb-arctitle { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: #e8edf2; letter-spacing: 2px; margin-bottom: 12px; }
+        .bb-arcphase p { color: #b8c6d6; font-size: 11px; line-height: 1.8; margin-bottom: 8px; }
+        .bb-egogrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-top: 28px; }
+        .bb-egocard { background: #1a1d26; padding: 28px; position: relative; overflow: hidden; transition: background 0.3s; }
+        .bb-egocard:hover { background: #2a2f3e; }
+        .bb-egocard::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #c8a96e, transparent); }
+        .bb-egoname { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: #e8edf2; letter-spacing: 3px; margin-bottom: 6px; }
+        .bb-egorole { font-size: 10px; letter-spacing: 2px; color: #c8a96e; text-transform: uppercase; margin-bottom: 14px; }
+        .bb-egocard p { color: #b8c6d6; font-size: 12px; line-height: 1.8; }
+        .bb-tagstack { margin-top: 20px; }
+        .bb-tagitem { display: flex; align-items: flex-start; gap: 20px; padding: 18px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .bb-tagitem:last-child { border-bottom: none; }
+        .bb-tagnum { font-size: 9px; letter-spacing: 3px; color: #8a9bb0; min-width: 28px; padding-top: 2px; }
+        .bb-tagtext { font-family: 'DM Serif Display', serif; font-style: italic; font-size: clamp(14px, 2vw, 18px); color: #e8edf2; flex: 1; line-height: 1.4; }
+        .bb-tagctx { font-size: 10px; letter-spacing: 2px; color: #c8a96e; text-transform: uppercase; white-space: nowrap; padding-top: 3px; }
+        .bb-twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
+        .bb-twocol p { color: #b8c6d6; font-size: 12px; line-height: 1.9; margin-bottom: 16px; }
+        .bb-palette { display: flex; gap: 4px; margin-top: 14px; }
+        .bb-swatch { flex: 1; height: 36px; border-radius: 3px; position: relative; }
+        .bb-swatch span { position: absolute; bottom: -18px; left: 0; font-size: 9px; letter-spacing: 1px; color: #8a9bb0; white-space: nowrap; }
+        .bb-brandrow { margin-top: 14px; }
+        .bb-branditem { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .bb-brandlabel { font-size: 9px; letter-spacing: 3px; color: #8a9bb0; text-transform: uppercase; margin-bottom: 3px; }
+        .bb-brandval { font-size: 14px; color: #e8edf2; }
+        .bb-slist { list-style: none; }
+        .bb-slist li { color: #b8c6d6; font-size: 12px; line-height: 1.9; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .bb-slist li::before { content: '—  '; color: #c8a96e; }
+        .bb-slist strong { color: #e8edf2; }
+        .bb-manifesto { background: #111218; padding: 48px 40px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .bb-manifesto-text { font-family: 'DM Serif Display', serif; font-size: clamp(14px, 1.8vw, 20px); color: #e8edf2; line-height: 1.8; max-width: 800px; }
+        .bb-manifesto-text em { color: #c8a96e; font-style: italic; }
+        .bb-footer { background: #0a0a0a; padding: 32px 40px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
+        .bb-footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 4px; color: #e8edf2; }
+        .bb-footer-logo span { color: #c8a96e; }
+        .bb-footer-meta { font-size: 10px; letter-spacing: 2px; color: #8a9bb0; text-align: right; line-height: 2; text-transform: uppercase; }
+        @media (max-width: 700px) {
+          .bb-archgrid, .bb-arctimeline, .bb-egogrid, .bb-twocol { grid-template-columns: 1fr; }
+          .bb-cover, .bb-section, .bb-manifesto, .bb-footer { padding-left: 22px; padding-right: 22px; }
+          .bb-tagitem { flex-direction: column; gap: 6px; }
+        }
+      </style>
+      <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+      <div class="bb-wrap">
+        <!-- Cover -->
+        <div class="bb-cover">
+          <div class="bb-eyebrow">Artist Brand Bible · v1.0</div>
+          <div class="bb-title">S<span>GAUGE</span></div>
+          <div class="bb-subtitle">Shawn Gladue · Denver, CO · Est. 2010</div>
+          <div class="bb-tagline">"Rapdad, back at it like a crack addict — can't quit if I wanted to."</div>
+          <div class="bb-meta">Upbeat Pain · Maktub · Same Ol' Gauge</div>
+        </div>
+
+        <!-- 01 Archetype -->
+        <div class="bb-section">
+          <div class="bb-slabel">01 — Identity & Archetype</div>
+          <div class="bb-stitle">WHO IS<br>SGAUGE</div>
+          <p style="color:#b8c6d6;font-size:12px;line-height:1.9;max-width:700px;">SGauge is the synthesis of contradictions held without apology. West coast melody filtered through Colorado survival. Engineering precision behind an artist's vulnerability. A father who turned the hardest year of his life into the foundation of everything he's building.</p>
+          <div class="bb-archgrid">
+            <div class="bb-archcard">
+              <div class="bb-archcard-label">Primary Archetype</div>
+              <div class="bb-archcard-title">THE SURVIVOR SAGE</div>
+              <p>The one who went through it and came back with receipts. Not performing pain — reporting it. The wisdom of a person who had no map and drew their own.</p>
+            </div>
+            <div class="bb-archcard">
+              <div class="bb-archcard-label">Secondary Archetype</div>
+              <div class="bb-archcard-title">THE BUILDER OUTLAW</div>
+              <p>Operates outside the system while building within it. Engineer, developer, A&R, artist — simultaneously. The infrastructure guy who's also the product.</p>
+            </div>
+            <div class="bb-archcard">
+              <div class="bb-archcard-label">Sonic Identity</div>
+              <div class="bb-archcard-title">UPBEAT PAIN</div>
+              <p>West coast melodic influence with a Colorado edge. Vibey enough to sing along to. Heavy enough that you feel the weight underneath. Joy and grief in the same bar.</p>
+            </div>
+            <div class="bb-archcard">
+              <div class="bb-archcard-label">Influences</div>
+              <div class="bb-archcard-title">THE REFERENCE POINTS</div>
+              <p>Mike Posner, Jay Sean, A Boogie wit da Hoodie, Colbie Caillat, Grieves, Slug of Atmosphere. The ones who made something personal feel universal.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Manifesto -->
+        <div class="bb-manifesto">
+          <div class="bb-slabel" style="margin-bottom:28px;">02 — Artist Manifesto</div>
+          <div class="bb-manifesto-text">
+            I come from the part of Littleton nobody admits exists. I come from a mother's addiction and a father's prison sentence and a floor that wasn't mine to sleep on. I started rapping because <em>I had something to say and nowhere safe to say it.</em><br><br>
+            I became an engineer because I refused to wait for someone else to build my door. I became a developer because I remember what it cost to have no one in my corner. I became RAPDAD because <em>Nelliana deserves a father who turned the worst year of his life into something that outlasts it.</em><br><br>
+            I am not performing. I am not a character. I am SGauge — the same person you'll meet in the studio, on the stage, and at the funeral. <em>Maktub. It was written.</em> All of it.
+          </div>
+        </div>
+
+        <!-- 03 Storyline -->
+        <div class="bb-section">
+          <div class="bb-slabel">03 — Career Storyline</div>
+          <div class="bb-stitle">SAME OL'<br>GAUGE</div>
+          <p style="color:#b8c6d6;font-size:12px;line-height:1.9;max-width:700px;margin-bottom:8px;">The arc is a hood story with a survivor's ending. Not glory for glory's sake — redemption as <em style="color:#c8a96e;">stability</em>. The right to stop working regular jobs and finally belong to the industry you've been building from the inside.</p>
+          <div class="bb-arctimeline">
+            <div class="bb-arcphase">
+              <div class="bb-arcnum">I</div>
+              <div class="bb-arclabel">Act One</div>
+              <div class="bb-arctitle">THE LOST SHEEP</div>
+              <p>East Denver born. Littleton raised. Half-homeless at 14, writing on a friend's floor. The music starts as survival — pure need to translate chaos into something that makes sense.</p>
+            </div>
+            <div class="bb-arcphase">
+              <div class="bb-arcnum">II</div>
+              <div class="bb-arclabel">Act Two</div>
+              <div class="bb-arctitle">SCREAMING INTO THE VOID</div>
+              <p>The awakening comes. He builds the infrastructure — engineering, production, A&R, media platform, artist development. He feeds everyone. And yet the universe still hasn't fully aligned.</p>
+            </div>
+            <div class="bb-arcphase">
+              <div class="bb-arcnum">III</div>
+              <div class="bb-arclabel">Act Three</div>
+              <div class="bb-arctitle">GLORY RECLAIMED</div>
+              <p>Not fame. Not a platinum plaque. <em style="color:#c8a96e;">Belonging.</em> A seat at the table he helped build. The music finally reaches the people it was always meant for.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 04 Alter Egos -->
+        <div class="bb-section">
+          <div class="bb-slabel">04 — The Characters</div>
+          <div class="bb-stitle">THE THREE<br>FACES</div>
+          <div class="bb-egogrid">
+            <div class="bb-egocard">
+              <div class="bb-egoname">SGAUGE</div>
+              <div class="bb-egorole">The Core · The Real · The Artist</div>
+              <p>Straight Shawn with the filter off. No performance, no persona — just the duality of mixed heritage and lived experience translated into west coast-influenced Colorado sound.</p>
+            </div>
+            <div class="bb-egocard">
+              <div class="bb-egoname">SHADY O'RAQ</div>
+              <div class="bb-egorole">The Shadow · The Release Valve</div>
+              <p>The part that doesn't have to be responsible. Darker, more reckless, less filtered. Not a lie — an extreme. The hood story without the hope at the end.</p>
+            </div>
+            <div class="bb-egocard">
+              <div class="bb-egoname">IICYBABII</div>
+              <div class="bb-egorole">The Feminine · The Contrast</div>
+              <p>The melodic softness fully unleashed. Pure melodic songwriting unconstrained by street credibility. A creative pressure valve.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 05 Taglines -->
+        <div class="bb-section">
+          <div class="bb-slabel">05 — Signatures & Taglines</div>
+          <div class="bb-stitle">THE LINES<br>THAT STICK</div>
+          <div class="bb-tagstack">
+            <div class="bb-tagitem"><span class="bb-tagnum">01</span><span class="bb-tagtext">"Rapdad, back at it like a crack addict — can't quit if I wanted to."</span><span class="bb-tagctx">Primary Signature</span></div>
+            <div class="bb-tagitem"><span class="bb-tagnum">02</span><span class="bb-tagtext">"Upbeat Pain."</span><span class="bb-tagctx">Sonic Identity</span></div>
+            <div class="bb-tagitem"><span class="bb-tagnum">03</span><span class="bb-tagtext">"Swing My Way."</span><span class="bb-tagctx">Recurring Call / Closing Tag</span></div>
+            <div class="bb-tagitem"><span class="bb-tagnum">04</span><span class="bb-tagtext">"Maktub." — It was written.</span><span class="bb-tagctx">Philosophical Core</span></div>
+            <div class="bb-tagitem"><span class="bb-tagnum">05</span><span class="bb-tagtext">"Same Ol' Gauge." — Success didn't change him.</span><span class="bb-tagctx">Career Thesis</span></div>
+            <div class="bb-tagitem"><span class="bb-tagnum">06</span><span class="bb-tagtext">"For the dope babies and the hood heroes."</span><span class="bb-tagctx">Audience Declaration</span></div>
+            <div class="bb-tagitem"><span class="bb-tagnum">07</span><span class="bb-tagtext">"I really hope to see everybody I fed at the funeral."</span><span class="bb-tagctx">Signature Bar — Funeral</span></div>
+          </div>
+        </div>
+
+        <!-- Quote -->
+        <div class="bb-section" style="padding-top:0;padding-bottom:0;">
+          <div class="bb-quote">
+            <p>Baby, let me get this bread. I heard everything you said. Trynna make my bed, before I fuck around and wind up dead. I really hope to see everybody I fed at the funeral.</p>
+            <cite>SGauge — "Funeral" (Upcoming Single)</cite>
+          </div>
+        </div>
+
+        <!-- 06 Visual Identity -->
+        <div class="bb-section">
+          <div class="bb-slabel">06 — Visual Identity & Packaging</div>
+          <div class="bb-stitle">THE LOOK OF<br>UPBEAT PAIN</div>
+          <div class="bb-twocol">
+            <div>
+              <p><strong style="color:#e8edf2;">Aesthetic Direction:</strong> Dark, sleek, city-built. The visual language of a person who came up in the shadows. Not loud. Not flashy. <em style="color:#c8a96e;">Sharp.</em> Like a samurai who also skates. Bandana with Cartier frames and makes it feel inevitable.</p>
+              <p><strong style="color:#e8edf2;">Visual References:</strong> Nighttime cityscapes. Long curly hair in a bun against a dark skyline. Scarred face lit dramatically — the scars are not hidden, they're the story.</p>
+              <p><strong style="color:#e8edf2;">Photography Direction:</strong> Low-key lighting. Blue and grey tones with warm amber accents. Character over beauty. No heavy retouching. This face has been somewhere.</p>
+            </div>
+            <div>
+              <div class="bb-brandrow">
+                <div class="bb-branditem"><div class="bb-brandlabel">Primary Font Energy</div><div class="bb-brandval">Bold condensed + serif contrast</div></div>
+                <div class="bb-branditem"><div class="bb-brandlabel">Motif</div><div class="bb-brandval">Duality / The split frame</div></div>
+                <div class="bb-branditem"><div class="bb-brandlabel">Symbol</div><div class="bb-brandval">The gauge / pressure meter</div></div>
+              </div>
+              <div class="bb-palette" style="margin-top:28px;">
+                <div class="bb-swatch" style="background:#0a0a0a;"><span>Void</span></div>
+                <div class="bb-swatch" style="background:#111218;"><span>Dark</span></div>
+                <div class="bb-swatch" style="background:#1e3a5f;"><span>Deep Blue</span></div>
+                <div class="bb-swatch" style="background:#2d5a8e;"><span>Steel</span></div>
+                <div class="bb-swatch" style="background:#8a9bb0;"><span>Fog</span></div>
+                <div class="bb-swatch" style="background:#c8a96e;"><span>Gold</span></div>
+                <div class="bb-swatch" style="background:#e8edf2;"><span>Ice</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 07 Marketability -->
+        <div class="bb-section">
+          <div class="bb-slabel">07 — Marketability Profile</div>
+          <div class="bb-stitle">WHY THIS<br>LANDS</div>
+          <div class="bb-twocol">
+            <ul class="bb-slist">
+              <li><strong>Self-sufficient production</strong> — No studio costs. Radio-ready output on demand. Lower barrier, faster output, full creative control.</li>
+              <li><strong>Multi-role infrastructure</strong> — SGauge + RAPDAD55 + RapClass creates three entry points into the same ecosystem.</li>
+              <li><strong>Built-in credibility gap</strong> — Known as engineer/developer before artist. That tension, when resolved publicly, is a story.</li>
+              <li><strong>International traction early</strong> — "A.I." performing overseas. Sync licensing and international markets are natural targets.</li>
+            </ul>
+            <ul class="bb-slist">
+              <li><strong>Differentiated lane</strong> — Documenting survival rather than glorifying the life. A distinction for a generation increasingly tired of the performance.</li>
+              <li><strong>Duality as brand pillar</strong> — Mixed race, dual city, upbeat-pain sound, engineer-artist identity. Duality is structural. It's in everything.</li>
+              <li><strong>The silence as power</strong> — What SGauge doesn't say about the hardest year is more compelling than what most artists do say.</li>
+              <li><strong>RAPDAD as platform multiplier</strong> — Interview access + artist development = relationships + distribution channel.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="bb-footer">
+          <div>
+            <div class="bb-footer-logo">S<span>GAUGE</span></div>
+            <div style="font-size:10px;letter-spacing:3px;color:#8a9bb0;text-transform:uppercase;margin-top:6px;">Shawn Gladue · Denver, CO · Est. 2010</div>
+          </div>
+          <div class="bb-footer-meta">RAPDAD55 · SHADY O'RAQ · IICYBABII<br>"Maktub. It was written."<br>BRAND BIBLE v1.0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═ INSIDER CIRCLE ═══════════════════════════════════════════ -->
+    <div class="panel" id="panel-insider">
+      <style>
+        .ic-wrap { padding: 0; }
+        .ic-goals-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 14px; }
+        .ic-goal-card { background: var(--s2); border: 1px solid var(--s3); border-radius: var(--r-sm); padding: 12px 14px; }
+        .ic-goal-num { font-family: var(--font-d); font-size: 22px; color: var(--white); margin: 0 0 2px; }
+        .ic-goal-lbl { font-size: 11px; color: var(--muted); }
+        .ic-pbar-wrap { background: var(--s3); border-radius: 99px; height: 6px; margin: 14px 0 6px; }
+        .ic-pbar { background: var(--purple); height: 6px; border-radius: 99px; width: 0%; transition: width 0.6s ease; }
+        .ic-plabels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+        .ic-tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 4px 0 18px; }
+        .ic-tier { background: var(--s2); border: 1px solid var(--s3); border-radius: var(--r); padding: 14px 16px; }
+        .ic-tier.featured { border-color: var(--purple); }
+        .ic-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 3px; margin-bottom: 8px; background: var(--purple-bg); color: var(--purple); letter-spacing: .04em; text-transform: uppercase; }
+        .ic-tier.featured .ic-badge { background: var(--purple); color: var(--white); }
+        .ic-price { font-family: var(--font-d); font-size: 26px; color: var(--white); margin: 0 0 2px; }
+        .ic-tier-name { font-size: 11px; color: var(--muted); margin: 0 0 10px; }
+        .ic-perks { list-style: none; }
+        .ic-perks li { font-size: 12px; color: var(--soft); padding: 4px 0; border-top: 1px solid var(--s3); }
+        .ic-perks li:first-child { border-top: none; }
+        .ic-perks li::before { content: "— "; color: var(--purple); }
+        .ic-timeline { display: flex; flex-direction: column; }
+        .ic-tl-row { display: flex; gap: 14px; align-items: flex-start; }
+        .ic-spine { display: flex; flex-direction: column; align-items: center; }
+        .ic-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--purple); flex-shrink: 0; margin-top: 5px; }
+        .ic-line { width: 1px; background: var(--s4); flex: 1; min-height: 22px; }
+        .ic-tl-content { padding-bottom: 18px; }
+        .ic-tl-week { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 2px; }
+        .ic-tl-task { font-size: 13px; color: var(--white); margin: 0; font-weight: 500; }
+        .ic-tl-sub { font-size: 12px; color: var(--dim); margin: 3px 0 0; line-height: 1.5; }
+        .ic-raised-input { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
+        .ic-raised-input label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); white-space: nowrap; }
+        .ic-raised-input input { width: 120px; }
+      </style>
+      <div class="card av">
+        <div class="ch"><h2>Insider Circle — Campaign Overview</h2><span class="cbg cbg-v">5Gauge</span></div>
+        <div class="ic-goals-grid">
+          <div class="ic-goal-card"><div class="ic-goal-num">$1,500</div><div class="ic-goal-lbl">Target from campaign</div></div>
+          <div class="ic-goal-card"><div class="ic-goal-num">75</div><div class="ic-goal-lbl">Supporters needed</div></div>
+          <div class="ic-goal-card"><div class="ic-goal-num">3 tiers</div><div class="ic-goal-lbl">Entry points</div></div>
+          <div class="ic-goal-card"><div class="ic-goal-num">4 weeks</div><div class="ic-goal-lbl">Campaign window</div></div>
+        </div>
+        <div class="ic-raised-input">
+          <label>$ Raised so far</label>
+          <input type="number" data-key="ic_raised" placeholder="0" min="0" oninput="updateIcBar(this.value)" style="width:120px;" />
+        </div>
+        <div class="ic-pbar-wrap"><div class="ic-pbar" id="icbar"></div></div>
+        <div class="ic-plabels"><span id="ic-raised-lbl">$0 raised</span><span>Goal: $1,500</span></div>
+      </div>
+
+      <div class="card">
+        <div class="ch"><h2>Support tiers</h2><span class="cbg cbg-v">Pricing</span></div>
+        <div class="ic-tiers">
+          <div class="ic-tier">
+            <span class="ic-badge">Listener</span>
+            <div class="ic-price">$10</div>
+            <div class="ic-tier-name">Day-one supporter</div>
+            <ul class="ic-perks">
+              <li>Digital album early access</li>
+              <li>Name in liner notes</li>
+              <li>Private update thread</li>
+            </ul>
+          </div>
+          <div class="ic-tier featured">
+            <span class="ic-badge">Inner Circle</span>
+            <div class="ic-price">$25</div>
+            <div class="ic-tier-name">Most popular</div>
+            <ul class="ic-perks">
+              <li>Everything in Listener</li>
+              <li>Exclusive unreleased track</li>
+              <li>Behind-the-scenes content</li>
+              <li>Voice memo from the studio</li>
+            </ul>
+          </div>
+          <div class="ic-tier">
+            <span class="ic-badge">Co-Signer</span>
+            <div class="ic-price">$50</div>
+            <div class="ic-tier-name">Deep supporter</div>
+            <ul class="ic-perks">
+              <li>Everything in Inner Circle</li>
+              <li>1:1 listening session</li>
+              <li>Shoutout on release day</li>
+              <li>First look at merch</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ch"><h2>4-week rollout</h2><span class="cbg cbg-v">Timeline</span></div>
+        <div class="ic-timeline">
+          <div class="ic-tl-row"><div class="ic-spine"><div class="ic-dot"></div><div class="ic-line"></div></div><div class="ic-tl-content"><p class="ic-tl-week">Week 1</p><p class="ic-tl-task">Soft launch to inner circle</p><p class="ic-tl-sub">DM your 50 most engaged followers first. No public post yet — exclusivity is the hook.</p></div></div>
+          <div class="ic-tl-row"><div class="ic-spine"><div class="ic-dot"></div><div class="ic-line"></div></div><div class="ic-tl-content"><p class="ic-tl-week">Week 2</p><p class="ic-tl-task">Public announcement + first piece of content</p><p class="ic-tl-sub">Drop a 60-second snippet or studio clip. Link to your payment page (Bandcamp, Gumroad, or direct).</p></div></div>
+          <div class="ic-tl-row"><div class="ic-spine"><div class="ic-dot"></div><div class="ic-line"></div></div><div class="ic-tl-content"><p class="ic-tl-week">Week 3</p><p class="ic-tl-task">Mid-campaign push + social proof</p><p class="ic-tl-sub">Post a supporter count update. Tag early backers (with permission). Drop the unreleased track for Inner Circle tier.</p></div></div>
+          <div class="ic-tl-row"><div class="ic-spine"><div class="ic-dot"></div></div><div class="ic-tl-content"><p class="ic-tl-week">Week 4</p><p class="ic-tl-task">Final push + close</p><p class="ic-tl-sub">Urgency post — "closing the circle." Announce the album release date. Lock in the co-signer 1:1 sessions.</p></div></div>
+        </div>
+      </div>
+
+      <!-- ALBUM BUDGET TRACKER -->
+      <div class="card av" id="abt-card">
+        <style>
+          .abt-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:18px; flex-wrap:wrap; gap:10px; }
+          .abt-total-wrap { text-align:right; }
+          .abt-total-num { font-family:var(--font-d); font-size:32px; color:var(--yellow); letter-spacing:.02em; line-height:1; }
+          .abt-total-lbl { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); margin-top:2px; }
+          .abt-funding { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:8px; margin-bottom:18px; }
+          .abt-fund-card { background:var(--s3); border-radius:var(--r-sm); padding:12px 14px; border-left:3px solid; }
+          .abt-fund-card.trade  { border-color:var(--green); }
+          .abt-fund-card.campaign { border-color:var(--purple); }
+          .abt-fund-card.sprint { border-color:var(--yellow); }
+          .abt-fund-amt { font-family:var(--font-d); font-size:22px; line-height:1; margin-bottom:3px; }
+          .abt-fund-card.trade   .abt-fund-amt { color:var(--green); }
+          .abt-fund-card.campaign .abt-fund-amt { color:var(--purple); }
+          .abt-fund-card.sprint  .abt-fund-amt { color:var(--yellow); }
+          .abt-fund-lbl { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.09em; color:var(--muted); }
+          .abt-section-lbl { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); padding-bottom:6px; margin:16px 0 8px; border-bottom:1px solid var(--s3); }
+          .abt-table { width:100%; border-collapse:collapse; font-size:12px; }
+          .abt-table thead th { font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.09em; color:var(--muted); text-align:left; padding:4px 6px 8px; border-bottom:1px solid var(--s4); }
+          .abt-table thead th.right { text-align:right; }
+          .abt-table tbody tr { border-bottom:1px solid var(--s3); }
+          .abt-table tbody tr:last-child { border-bottom:none; }
+          .abt-table td { padding:9px 6px; vertical-align:top; line-height:1.4; }
+          .abt-item-name { font-size:13px; font-weight:500; color:var(--white); display:block; }
+          .abt-item-sub  { font-size:10px; color:var(--muted); display:block; margin-top:1px; }
+          .abt-item-note { font-size:12px; color:var(--dim); }
+          .abt-cost { font-size:13px; font-weight:500; color:var(--white); text-align:right; white-space:nowrap; }
+          .abt-cost.zero { color:var(--muted); }
+          .abt-src-badge { display:inline-flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; padding:2px 7px; border-radius:3px; white-space:nowrap; }
+          .abt-src-badge.trade    { background:var(--green-bg);  color:var(--green); }
+          .abt-src-badge.campaign { background:var(--purple-bg); color:var(--purple); }
+          .abt-src-badge.sprint   { background:var(--yellow-bg); color:var(--yellow); }
+          .abt-src-badge.inhouse  { background:var(--s3);        color:var(--muted); }
+          .abt-subtotal { display:flex; justify-content:space-between; align-items:center; padding:10px 6px; margin-top:6px; border-top:1px solid var(--s4); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); }
+          .abt-subtotal span:last-child { color:var(--yellow); font-family:var(--font-d); font-size:18px; letter-spacing:.02em; }
+          .abt-party-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:8px; }
+          .abt-party-item { background:var(--s3); border-radius:var(--r-sm); padding:10px 12px; }
+          .abt-party-amt  { font-family:var(--font-d); font-size:20px; color:var(--white); line-height:1; }
+          .abt-party-lbl  { font-size:10px; color:var(--muted); margin-top:3px; line-height:1.3; }
+          .abt-legend { display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; font-size:11px; color:var(--muted); align-items:center; }
+          .abt-editable { background:none; border:none; color:var(--white); font-family:var(--font); font-size:13px; font-weight:500; width:70px; text-align:right; padding:0; }
+          .abt-editable:focus { outline:none; color:var(--yellow); }
+        </style>
+
+        <div class="abt-header">
+          <div>
+            <div class="ch" style="margin-bottom:4px;"><h2>Album budget tracker</h2><span class="cbg cbg-v">Pre-Merch · Pre-Rollout · Indie Release</span></div>
+          </div>
+          <div class="abt-total-wrap">
+            <div class="abt-total-num" id="abt-grand-total">$3,580</div>
+            <div class="abt-total-lbl">Total estimated budget</div>
+          </div>
+        </div>
+
+        <!-- Funding sources -->
+        <div class="abt-funding">
+          <div class="abt-fund-card trade">
+            <div class="abt-fund-amt">~$1,250</div>
+            <div class="abt-fund-lbl">Cover via trades</div>
+          </div>
+          <div class="abt-fund-card campaign">
+            <div class="abt-fund-amt">~$1,500</div>
+            <div class="abt-fund-lbl">Cover via campaign</div>
+          </div>
+          <div class="abt-fund-card sprint">
+            <div class="abt-fund-amt">~$830</div>
+            <div class="abt-fund-lbl">Cover via cash sprints</div>
+          </div>
+        </div>
+
+        <!-- Production costs -->
+        <div class="abt-section-lbl">Video + Production costs</div>
+        <table class="abt-table">
+          <thead><tr>
+            <th style="width:34%">Line item</th>
+            <th style="width:36%">Notes</th>
+            <th class="right" style="width:14%">Cost</th>
+            <th style="width:16%">Source</th>
+          </tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="abt-item-name">Clothing budget</span><span class="abt-item-sub">9 videos × $100</span></td>
+              <td><span class="abt-item-note">Solo, Cheatcode, WayneBrady, Funeral, Bidness, Paid My Dues, Run It Up, What We On?, Work</span></td>
+              <td class="abt-cost">$<input type="number" class="abt-editable" data-key="abt_clothing" value="900" min="0" oninput="abtRecalc()"></td>
+              <td><span class="abt-src-badge sprint">Cash Sprint</span></td>
+            </tr>
+            <tr>
+              <td><span class="abt-item-name">Videographers</span><span class="abt-item-sub">3 videos @ $200–250</span></td>
+              <td><span class="abt-item-note">Funeral, Cheatcode, WayneBrady</span></td>
+              <td class="abt-cost">$<input type="number" class="abt-editable" data-key="abt_video" value="650" min="0" oninput="abtRecalc()"></td>
+              <td><span class="abt-src-badge trade">Trade</span></td>
+            </tr>
+            <tr>
+              <td><span class="abt-item-name">Exotic dancer</span><span class="abt-item-sub">Work video</span></td>
+              <td><span class="abt-item-note">Contractor rate, pay on delivery</span></td>
+              <td class="abt-cost">$<input type="number" class="abt-editable" data-key="abt_dancer" value="300" min="0" oninput="abtRecalc()"></td>
+              <td><span class="abt-src-badge sprint">Cash Sprint</span></td>
+            </tr>
+            <tr>
+              <td><span class="abt-item-name">Paid My Dues feature</span><span class="abt-item-sub">1 verse</span></td>
+              <td><span class="abt-item-note">Confirmed $150</span></td>
+              <td class="abt-cost">$<input type="number" class="abt-editable" data-key="abt_feature" value="150" min="0" oninput="abtRecalc()"></td>
+              <td><span class="abt-src-badge sprint">Cash Sprint</span></td>
+            </tr>
+            <tr>
+              <td><span class="abt-item-name">Cover design</span><span class="abt-item-sub">4 songs needing payment</span></td>
+              <td><span class="abt-item-note">WayneBrady, Run It Up, What We On?, Work</span></td>
+              <td class="abt-cost">$<input type="number" class="abt-editable" data-key="abt_cover" value="250" min="0" oninput="abtRecalc()"></td>
+              <td><span class="abt-src-badge trade">Trade</span></td>
+            </tr>
+            <tr>
+              <td><span class="abt-item-name">In-house production</span><span class="abt-item-sub">Mix, edit, EPK, deliverables</span></td>
+              <td><span class="abt-item-note">Self-handled — no cost</span></td>
+              <td class="abt-cost zero">$0</td>
+              <td><span class="abt-src-badge inhouse">In-house</span></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="abt-subtotal"><span>Production subtotal</span><span id="abt-prod-total">$2,250</span></div>
+
+        <!-- Release party -->
+        <div class="abt-section-lbl">Release party costs</div>
+        <div class="abt-party-grid">
+          <div class="abt-party-item">
+            <div class="abt-party-amt">$<input type="number" class="abt-editable" data-key="abt_studio" value="500" min="0" oninput="abtRecalc()" style="width:60px;font-size:18px;"></div>
+            <div class="abt-party-lbl">Studio rental (4hr + engineer)</div>
+          </div>
+          <div class="abt-party-item">
+            <div class="abt-party-amt">$<input type="number" class="abt-editable" data-key="abt_food" value="225" min="0" oninput="abtRecalc()" style="width:60px;font-size:18px;"></div>
+            <div class="abt-party-lbl">Food + drinks (35 people)</div>
+          </div>
+          <div class="abt-party-item">
+            <div class="abt-party-amt">$<input type="number" class="abt-editable" data-key="abt_sticker" value="90" min="0" oninput="abtRecalc()" style="width:60px;font-size:18px;"></div>
+            <div class="abt-party-lbl">Sticker pack + download card × 35</div>
+          </div>
+          <div class="abt-party-item">
+            <div class="abt-party-amt">$<input type="number" class="abt-editable" data-key="abt_flyers" value="40" min="0" oninput="abtRecalc()" style="width:60px;font-size:18px;"></div>
+            <div class="abt-party-lbl">Printed flyers (>100 qty)</div>
+          </div>
+        </div>
+        <div class="abt-subtotal"><span>Release party subtotal</span><span id="abt-party-total">$855</span></div>
+
+        <!-- Legend -->
+        <div class="abt-legend">
+          <span class="abt-src-badge trade">Trade</span> Cover with your skills
+          <span class="abt-src-badge campaign">Campaign</span> Insider Circle fund
+          <span class="abt-src-badge sprint">Cash Sprint</span> Paid gigs earmarked for album
+          <span class="abt-src-badge inhouse">In-house</span> Self-handled, no cost
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ch"><h2>Campaign notes</h2></div>
+        <textarea data-key="ic_notes" style="min-height:100px;" placeholder="Supporter names, platform choice, payment link, milestones..."></textarea>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+</div>
+
+<script>
+const SK = 'cc_v2';
+const load = () => { try { return JSON.parse(localStorage.getItem(SK)) || {}; } catch { return {}; } };
+const save = s => { try { localStorage.setItem(SK, JSON.stringify(s)); } catch(e) {} };
+
+const PAGES = {
+  overview: { title:'Dashboard',      sub:'Today: Sick Day Protocol — autopilot mode' },
+  rapclass: { title:'RAPCLASS',       sub:'Platform build · curriculum · beta artists' },
+  radio:    { title:'RAPDAD Radio',   sub:'Edit queue · interview pipeline' },
+  employee: { title:'RAPDAD Employee',sub:'Client work · pricing cards' },
+  sgauge:   { title:'5Gauge',         sub:'Music · brand · shows' },
+  brandbible:{ title:'Brand Bible',    sub:'SGauge artist identity & visual direction' },
+  insider:  { title:'Insider Circle', sub:'Founding supporter campaign · album release' },
+  content:  { title:'Content',        sub:'Non-radio content queue' },
+  admin:    { title:'Admin',          sub:'Life ops · people' },
+  weekly:   { title:'Weekly Focus',   sub:'Intention · daily blocks · review' },
+  budget:   { title:'Budget',         sub:'Income · expenses · debt' },
+};
+
+const SECTIONS = [
+  { id:'rapclass', label:'RAPCLASS',      color:'var(--blue)',   keys:['rc_1','rc_2','rc_3','rc_4','rc_5','rc_6','rc_7','rc_8','rc_9','rc_10','rc_11','rc_12','rc_hyp','rc_tef','rc_nikki','rc_4th','rc_grant_research','rc_grant_apply','rc_grant_followup'] },
+  { id:'radio',    label:'RAPDAD Radio',  color:'var(--pink)',   keys:['rd_roundtable','rd_kmac','rd_carrie','rd_loralee','rd_dank','rd_dimedee','rd_2eazy','rd_roman','rd_jenae'] },
+  { id:'employee', label:'RD Employee',   color:'var(--orange)', keys:['emp_nakai1','emp_nakai2','emp_flost','emp_tokerfest','emp_2eazy_shoot','emp_kooya','emp_birthday','pc_mini','pc_recording','pc_fullprod','pc_mv','pc_shortform','pc_interviews','pc_event','pc_photo','pc_dev'] },
+  { id:'sgauge',   label:'5Gauge',        color:'var(--purple)', keys:['sg_rec','sg_seif','sg_ego','sg_barbers','sg_sync','sg_hair','sg_videos','sg_cover','sg_brand','sg_insider','sg_bandcamp','sg_qoncert','sg_plod'] },
+  { id:'content',  label:'Content',       color:'var(--yellow)', keys:['con_roundtable','con_album','con_ralfy','con_420','con_bangz'] },
+  { id:'admin',    label:'Admin',         color:'var(--green)',  keys:['adm_hdd','adm_email','adm_cal','adm_work','adm_house','adm_simone','adm_nellie','adm_vinny'] },
+];
+
+const HOT = [
+  { key:'tdy_errupt_outreach', label:'E.R.R.U.P.T. management — get yes/no today',  tag:'now' },
+  { key:'tdy_protools',        label:'Pay for Pro Tools — unblock Artistry',         tag:'now' },
+  { key:'tdy_oz_text',         label:'Text OZ — lock May 9 & 11 (Fort Collins)',     tag:'now' },
+  { key:'tdy_carrie_schedule', label:'Schedule Carrie interview before May 11',      tag:'hot' },
+  { key:'tdy_austin_text',     label:'Confirm Austin Toker — May 23 (Co Springs)',   tag:'hot' },
+  { key:'rd_carrie',           label:'Film Carrie — Mother\'s Day',                  tag:'hot' },
+  { key:'rd_loralee',          label:'Finish editing Loralee — Mother\'s Day',       tag:'hot' },
+  { key:'tdy_troy_outreach',   label:'Draft Troy Good outreach — verse request',     tag:'soon' },
+];
+
+const AP_KEYS = ['tdy_vegas_organize','tdy_oz_text','tdy_austin_text','tdy_errupt_outreach','tdy_protools','tdy_rapclass_walkthrough','tdy_rapclass_outreach_draft','tdy_carrie_schedule','tdy_vegas_postedit','tdy_troy_outreach','tdy_loralee_roughcut'];
+
+/* ── Nav ── */
+function go(id, silent) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
+  const panel = document.getElementById('panel-' + id);
+  if (panel) panel.classList.add('active');
+  document.querySelectorAll('.nb').forEach(b => {
+    if (b.getAttribute('onclick') === `go('${id}')`) b.classList.add('active');
+  });
+  const pg = PAGES[id] || {};
+  document.getElementById('ptitle').textContent = pg.title || id;
+  document.getElementById('psub').textContent = pg.sub || '';
+  if (!silent) { const s = load(); s['__page'] = id; save(s); }
+}
+
+/* ── Sidebar ── */
+function toggleSB() {
+  const sb = document.getElementById('sidebar');
+  sb.classList.toggle('closed');
+  const s = load(); s['__sb'] = sb.classList.contains('closed'); save(s);
+}
+
+/* ── Save flash ── */
+let ft;
+function flash() {
+  const el = document.getElementById('saveflash');
+  if (el) { el.style.opacity = '1'; clearTimeout(ft); ft = setTimeout(() => el.style.opacity = '0', 1800); }
+}
+
+function abtRecalc() {
+  const g = k => parseFloat(document.querySelector(`[data-key="${k}"]`)?.value) || 0;
+  const prod = g("abt_clothing") + g("abt_video") + g("abt_dancer") + g("abt_feature") + g("abt_cover");
+  const party = g("abt_studio") + g("abt_food") + g("abt_sticker") + g("abt_flyers");
+  const total = prod + party;
+  const fmt = n => "$" + n.toLocaleString();
+  const el1 = document.getElementById("abt-prod-total");
+  const el2 = document.getElementById("abt-party-total");
+  const el3 = document.getElementById("abt-grand-total");
+  if (el1) el1.textContent = fmt(prod);
+  if (el2) el2.textContent = fmt(party);
+  if (el3) el3.textContent = fmt(total);
+}
+
+function updateIcBar(val) {
+  const raised = Math.max(0, parseFloat(val) || 0);
+  const pct = Math.min(100, (raised / 1500) * 100);
+  const bar = document.getElementById('icbar');
+  if (bar) bar.style.width = pct + '%';
+  const lbl = document.getElementById('ic-raised-lbl');
+  if (lbl) lbl.textContent = '$' + raised.toLocaleString() + ' raised';
+}
+
+/* ── Persist ── */
+function persistEl(el) {
+  const key = el.dataset.key; if (!key) return;
+  const s = load();
+  s[key] = el.type === 'checkbox' ? el.checked : el.value;
+  save(s); flash(); updateCounts(); updateDashboard();
+}
+
+function restoreAll() {
+  const s = load();
+  document.querySelectorAll('[data-key]').forEach(el => {
+    const v = s[el.dataset.key]; if (v === undefined) return;
+    if (el.type === 'checkbox') {
+      el.checked = !!v;
+      const li = el.closest('li');
+      if (li && !!v) li.classList.add('done');
+    } else { el.value = v; }
+  });
+  ['sgrec','sgvid','sgbrand'].forEach(k => {
+    const el = document.getElementById('pct-' + k);
+    if (el) { const colors = {sgrec:'var(--purple)',sgvid:'var(--blue)',sgbrand:'var(--pink)'}; bar(k, el.value, colors[k]); }
+  });
+  // restore insider circle bar
+  if (s["ic_raised"] !== undefined) updateIcBar(s["ic_raised"]);
+  setTimeout(abtRecalc, 50); // recalc budget totals after DOM restore
+  if (s['__sb'] !== false && s['__sb'] !== undefined) {
+    if (!s['__sb']) document.getElementById('sidebar').classList.remove('closed');
+  }
+  go(s['__page'] || 'overview', true);
+}
+
+function attachListeners() {
+  document.querySelectorAll('[data-key]').forEach(el => {
+    const evt = el.type === 'checkbox' ? 'change' : 'input';
+    el.addEventListener(evt, () => persistEl(el));
+    if (el.type === 'checkbox') {
+      el.addEventListener('change', () => {
+        const li = el.closest('li');
+        if (li) li.classList.toggle('done', el.checked);
+      });
+    }
+  });
+}
+
+/* ── Progress bars ── */
+function bar(id, val, color) {
+  const pct = Math.min(100, Math.max(0, parseInt(val)||0));
+  const el = document.getElementById('bar-' + id);
+  if (el) { el.style.width = pct + '%'; if (color) el.style.background = color; }
+}
+
+/* ── Counts ── */
+function updateCounts() {
+  const s = load();
+  SECTIONS.forEach(sec => {
+    const done = sec.keys.filter(k => !!s[k]).length;
+    const rem = sec.keys.length - done;
+    const el = document.getElementById('cnt-' + sec.id);
+    if (!el) return;
+    el.textContent = rem > 0 ? rem : '✓';
+    el.style.opacity = rem > 0 ? '1' : '0.5';
+  });
+}
+
+/* ── Dashboard ── */
+function updateDashboard() {
+  const s = load();
+  const apEl = document.getElementById('apProgress');
+  if (apEl) {
+    const done = AP_KEYS.filter(k => !!s[k]).length;
+    apEl.textContent = done + ' / ' + AP_KEYS.length + ' done';
+    apEl.style.color = done === AP_KEYS.length ? 'var(--green)' : 'var(--muted)';
+  }
+  const grid = document.getElementById('ovgrid');
+  if (grid) {
+    grid.innerHTML = SECTIONS.map(sec => {
+      const done = sec.keys.filter(k => !!s[k]).length;
+      const total = sec.keys.length;
+      const pct = total ? Math.round((done/total)*100) : 0;
+      return `<div class="sc">
+        <div class="sclb" style="color:${sec.color}">${sec.label}</div>
+        <div class="scdn">${done}<span style="font-size:14px;color:var(--muted);font-weight:400;"> / ${total}</span></div>
+        <div class="sctt">${pct}% complete</div>
+        <div class="scbar"><div class="scfill" style="width:${pct}%;background:${sec.color}"></div></div>
+      </div>`;
+    }).join('');
+  }
+  const hl = document.getElementById('hotlist');
+  if (hl) {
+    hl.innerHTML = HOT.map(item => {
+      const done = !!s[item.key];
+      const tc = item.tag==='now'?'ptag-n':item.tag==='hot'?'ptag-h':'ptag-s';
+      const tl = item.tag==='now'?'🔥 now':item.tag==='hot'?'urgent':'soon';
+      return `<li class="${done?'done':''}">
+        <input type="checkbox" ${done?'checked':''} onchange="syncHot('${item.key}',this)">
+        <label>${item.label}</label>
+        <span class="ptag ${tc}">${tl}</span>
+      </li>`;
+    }).join('');
+  }
+}
+
+function syncHot(key, cb) {
+  const s = load(); s[key] = cb.checked; save(s); flash();
+  const real = document.querySelector(`[data-key="${key}"]`);
+  if (real) {
+    real.checked = cb.checked;
+    const li = real.closest('li');
+    if (li) li.classList.toggle('done', cb.checked);
+  }
+  updateCounts(); updateDashboard();
+}
+
+/* ── Week strip ── */
+function getMon(d) { const dt = new Date(d), day = dt.getDay(); dt.setDate(dt.getDate()-((day+6)%7)); dt.setHours(0,0,0,0); return dt; }
+function isNellieWeek(mon) { const ref = new Date('2026-04-13'); return Math.round((mon-ref)/604800000)%2===0; }
+
+function renderStrip() {
+  const today = new Date(), mon = getMon(today), nel = isNellieWeek(mon);
+  const names = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  document.getElementById('wstrip').innerHTML = names.map((n,i) => {
+    const d = new Date(mon); d.setDate(mon.getDate()+i);
+    const isT = d.toDateString()===today.toDateString(), isW = i>=5, isN = nel&&isW;
+    let cls='wd'; if(isT) cls+=' today'; if(isN) cls+=' nellie';
+    const tc = isN?'tn':isW?'to':'tw', tl = isN?'Nellie':isW?'off':'work';
+    return `<div class="${cls}"><div class="wdn">${n}</div><div class="wdnum">${d.getDate()}</div><div class="wdtag ${tc}">${tl}</div></div>`;
+  }).join('');
+  const ws = mon.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  const we = new Date(mon); we.setDate(mon.getDate()+6);
+  document.getElementById('wklabel').textContent = `Week of ${ws} – ${we.toLocaleDateString('en-US',{month:'short',day:'numeric'})}`;
+  const nel2 = isNellieWeek(mon);
+  document.getElementById('npillwrap').innerHTML = nel2
+    ? '<div class="npill" style="background:var(--yellow-bg);color:var(--yellow);">&#9733; Nellie weekend</div>'
+    : '<div class="npill" style="background:var(--s3);color:var(--muted);">Free weekend</div>';
+}
+
+/* ── Date clock ── */
+function renderDate() {
+  document.getElementById('datedisp').innerHTML =
+    new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'}) +
+    '<br>' + new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+}
+
+/* ── Weekly day blocks ── */
+const SCHED = [
+  {day:'Monday',   chips:[{l:'Shower 5am',c:'cy'},{l:'Work 7–2pm',c:'cn'},{l:'Edit clips 4pm',c:'cp'},{l:'Batch posts 5pm',c:'cp'},{l:'Studio/RAP 6–7pm',c:'cv'},{l:'Rest/film 8pm',c:'cy'}]},
+  {day:'Tuesday',  chips:[{l:'Shower 5am',c:'cy'},{l:'Work 7–2pm',c:'cn'},{l:'Edit clips 4pm',c:'cp'},{l:'Batch posts 5pm',c:'cp'},{l:'Studio/RAP 6–7pm',c:'cv'},{l:'Rest/film 8pm',c:'cy'}]},
+  {day:'Wednesday',chips:[{l:'Shower 5am',c:'cy'},{l:'Work 7–2pm',c:'cn'},{l:'Edit clips 4–5pm',c:'cp'},{l:'Studio/RAP 6–7pm',c:'cv'},{l:'Rest/film 8pm',c:'cy'}]},
+  {day:'Thursday', chips:[{l:'Shower 5am',c:'cy'},{l:'Work 7–2pm',c:'cn'},{l:'Batch posts 4–5pm',c:'cp'},{l:'Studio/RAP 6–7pm',c:'cv'},{l:'Rest/film 8pm',c:'cy'}]},
+  {day:'Friday',   chips:[{l:'Shower 5am',c:'cy'},{l:'Work 7–1pm',c:'cn'},{l:'Setup live 4pm',c:'cb2'},{l:'Outreach 5pm',c:'cb2'},{l:'Live reviews 6–7pm',c:'cv'},{l:'Rest/film 8pm',c:'cy'}]},
+  {day:'Saturday', note:'varies on Nellie weekends', chips:[{l:'Gym/Store/Laundry',c:'cy'},{l:'Studio/RAP 9am–1pm',c:'cv'},{l:'Website/admin 2–4pm',c:'cb2'},{l:'Outreach 5pm',c:'cb2'},{l:'Studio/RAP 6–8pm',c:'cv'}]},
+  {day:'Sunday',   note:'Nellie = full day', chips:[{l:'Gym/Laundry 6am',c:'cy'},{l:'Clean 7–8am',c:'cy'},{l:'Interviews 10am–2pm',c:'cv'},{l:'Website/admin 3–4pm',c:'cb2'},{l:'Date night/rest 6pm',c:'cy'}]},
+];
+
+function renderWeeklyDays() {
+  document.getElementById('wkdays').innerHTML = SCHED.map(s => `
+    <div class="db">
+      <h3>${s.day}${s.note?` <span style="font-size:9px;font-weight:400;color:var(--muted);text-transform:none;">(${s.note})</span>`:''}</h3>
+      <div class="chips">${s.chips.map(c=>`<span class="chip ${c.c}">${c.l}</span>`).join('')}</div>
+      <div class="fg"><div class="fl">Focus notes</div><textarea data-key="wk_${s.day.toLowerCase()}" placeholder="Lock in on ${s.day}..."></textarea></div>
+    </div>`).join('');
+}
+
+/* ── Reset ── */
+function resetAll() {
+  if (!confirm('Reset ALL saved data? This cannot be undone.')) return;
+  localStorage.removeItem(SK); location.reload();
+}
+
+/* ── INIT ── */
+document.addEventListener('DOMContentLoaded', () => {
+  renderDate();
+  renderStrip();
+  renderWeeklyDays();
+  restoreAll();
+  attachListeners();
+  // attach weekly day textareas (rendered after DOMContentLoaded)
+  document.querySelectorAll('#wkdays [data-key]').forEach(el => {
+    el.addEventListener('input', () => persistEl(el));
+  });
+  updateCounts();
+  updateDashboard();
+  setInterval(renderDate, 60000);
+});
+</script>
+</body>
+</html>
