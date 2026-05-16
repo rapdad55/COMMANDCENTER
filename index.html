@@ -1,0 +1,1892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gauge Command Center</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Serif+Display:ital@0;1&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg:        #0d0d0d;
+  --surface:   #141414;
+  --s2:        #1a1a1a;
+  --s3:        #232323;
+  --s4:        #2e2e2e;
+  --s5:        #3a3a3a;
+  --muted:     #6b6b6b;
+  --dim:       #8a8a8a;
+  --soft:      #c8c8c8;
+  --white:     #f0efe9;
+
+  /* Workstream palette (from spec) */
+  --ws-roxy:   #FF6B35;  --ws-roxy-bg:   rgba(255,107,53,0.10);
+  --ws-promo:  #E63946;  --ws-promo-bg:  rgba(230,57,70,0.10);
+  --ws-prod:   #2A9D8F;  --ws-prod-bg:   rgba(42,157,143,0.10);
+  --ws-roll:   #06A77D;  --ws-roll-bg:   rgba(6,167,125,0.10);
+  --ws-debt:   #F4A261;  --ws-debt-bg:   rgba(244,162,97,0.10);
+  --ws-net:    #9B5DE5;  --ws-net-bg:    rgba(155,93,229,0.10);
+  --ws-book:   #3A86FF;  --ws-book-bg:   rgba(58,134,255,0.10);
+  --ws-tour:   #FF006E;  --ws-tour-bg:   rgba(255,0,110,0.10);
+  --ws-job:    #6C757D;  --ws-job-bg:    rgba(108,117,125,0.10);
+  --ws-fam:    #FF8FB1;  --ws-fam-bg:    rgba(255,143,177,0.10);
+  --ws-rec:    #FFD60A;  --ws-rec-bg:    rgba(255,214,10,0.10);
+
+  /* Status */
+  --st-done:    #06A77D;
+  --st-on:      #2A9D8F;
+  --st-risk:    #F4A261;
+  --st-behind:  #E63946;
+
+  --r: 8px; --r-sm: 5px; --r-lg: 12px;
+  --sbw: 220px;
+  --font-d: 'Bebas Neue', sans-serif;
+  --font:   'DM Sans', sans-serif;
+}
+
+* , *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--bg); color: var(--white); font-family: var(--font); font-size: 14px; line-height: 1.55; min-height: 100vh; }
+input, textarea, button, select { font-family: var(--font); font-size: 13px; color: inherit; }
+button { cursor: pointer; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--s5); border-radius: 3px; }
+
+/* ── APP SHELL ───────────────────────────────────────────── */
+.app { display: flex; min-height: 100vh; }
+.sidebar {
+  width: var(--sbw); background: var(--surface);
+  border-right: 1px solid var(--s3); flex-shrink: 0;
+  display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;
+  z-index: 30; transition: transform .22s ease;
+}
+.sb-logo { padding: 18px 16px 14px; border-bottom: 1px solid var(--s3); display: flex; align-items: center; gap: 10px; }
+.sb-mark {
+  width: 32px; height: 32px; border-radius: var(--r-sm);
+  background: var(--ws-roxy); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-d); font-size: 14px; letter-spacing: .04em;
+}
+.sb-tx h1 { font-family: var(--font-d); font-size: 17px; letter-spacing: .06em; line-height: 1; }
+.sb-tx p { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; margin-top: 3px; }
+.sb-nav { flex: 1; overflow-y: auto; padding: 10px 8px; }
+.sb-glabel { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); padding: 10px 8px 5px; }
+.nb {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 9px 10px; border-radius: var(--r-sm); border: none;
+  background: none; color: var(--dim); font-size: 13px; text-align: left;
+  transition: background .12s, color .12s;
+}
+.nb:hover { background: var(--s3); color: var(--soft); }
+.nb.active { background: var(--s3); color: var(--white); }
+.nb .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.sb-bot { padding: 12px 14px; border-top: 1px solid var(--s3); }
+.sb-foot { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .1em; line-height: 1.7; }
+.sb-flash { font-size: 10px; color: var(--st-done); margin-top: 6px; opacity: 0; transition: opacity .25s; letter-spacing: .06em; text-transform: uppercase; }
+.sb-flash.on { opacity: 1; }
+.sb-reset { font-size: 10px; background: none; border: 1px solid var(--s4); color: var(--muted); padding: 4px 10px; border-radius: 4px; letter-spacing: .06em; text-transform: uppercase; margin-top: 8px; }
+.sb-reset:hover { color: var(--soft); border-color: var(--s5); }
+
+/* ── MAIN ────────────────────────────────────────────────── */
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.topbar {
+  display: flex; align-items: center; gap: 14px;
+  padding: 18px 26px; border-bottom: 1px solid var(--s3);
+  position: sticky; top: 0; background: var(--bg); z-index: 20;
+}
+.tb-burger { display: none; background: var(--s3); border: none; width: 36px; height: 36px; border-radius: var(--r-sm); color: var(--white); font-size: 18px; }
+.tb-title { font-family: var(--font-d); font-size: 28px; letter-spacing: .04em; line-height: 1; }
+.tb-sub   { font-size: 11px; color: var(--muted); margin-top: 3px; letter-spacing: .04em; }
+.tb-right { margin-left: auto; text-align: right; font-size: 11px; color: var(--muted); line-height: 1.6; }
+
+/* Week strip */
+.wstrip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; padding: 12px 26px; border-bottom: 1px solid var(--s3); }
+.wd { background: var(--surface); border: 1px solid var(--s3); border-radius: var(--r-sm); padding: 7px 4px; text-align: center; min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 3px; }
+.wd.today { border-color: var(--ws-roxy); background: var(--ws-roxy-bg); }
+.wdn { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); }
+.wd.today .wdn { color: var(--ws-roxy); }
+.wdnum { font-family: var(--font-d); font-size: 20px; line-height: 1; color: var(--white); }
+.wddots { display: flex; gap: 3px; flex-wrap: wrap; justify-content: center; margin-top: 2px; }
+.wddots span { width: 5px; height: 5px; border-radius: 50%; }
+
+/* Content */
+.content { flex: 1; padding: 18px 26px 60px; }
+.panel { display: none; animation: fadeUp .2s ease; }
+.panel.active { display: block; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── ROXY HERO ───────────────────────────────────────────── */
+.roxy-hero {
+  background: linear-gradient(135deg, #1f0f08 0%, #2a1208 40%, #1a0a04 100%);
+  border: 2px solid var(--ws-roxy);
+  border-radius: var(--r-lg); padding: 28px 28px 24px;
+  margin-bottom: 18px; position: relative; overflow: hidden;
+  animation: roxyPulse 3.4s ease-in-out infinite;
+}
+@keyframes roxyPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 107, 53, 0.45), inset 0 0 30px rgba(255,107,53,0.05); }
+  50%      { box-shadow: 0 0 36px 4px rgba(255, 107, 53, 0.30), inset 0 0 60px rgba(255,107,53,0.08); }
+}
+.roxy-hero::before {
+  content: 'ROXY'; position: absolute; right: -20px; top: 50%;
+  transform: translateY(-50%) rotate(90deg); pointer-events: none;
+  font-family: var(--font-d); font-size: 140px; color: rgba(255,107,53,0.05); letter-spacing: 20px; white-space: nowrap;
+}
+.roxy-eyebrow { font-size: 10px; letter-spacing: .25em; color: var(--ws-roxy); text-transform: uppercase; margin-bottom: 14px; }
+.roxy-count { font-family: var(--font-d); font-size: clamp(72px, 14vw, 140px); line-height: 0.9; letter-spacing: .02em; color: var(--white); }
+.roxy-count .unit { font-size: clamp(20px, 3vw, 30px); color: var(--ws-roxy); margin-left: 10px; letter-spacing: .12em; }
+.roxy-tagline { font-family: 'DM Serif Display', serif; font-style: italic; font-size: clamp(15px, 2.2vw, 20px); color: var(--soft); margin-top: 10px; max-width: 600px; }
+.roxy-meta { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 18px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); }
+.roxy-meta span { padding: 4px 10px; background: rgba(255,107,53,0.10); border-radius: 99px; color: var(--ws-roxy); }
+.roxy-prog { margin-top: 22px; }
+.roxy-prog-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.roxy-prog-head .num { color: var(--white); font-family: var(--font-d); font-size: 18px; letter-spacing: .04em; }
+.roxy-bar { height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+.roxy-bar-fill { height: 100%; background: linear-gradient(90deg, var(--ws-roxy), var(--ws-promo)); border-radius: 4px; transition: width .5s ease; }
+
+/* Mini countdowns */
+.mini-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.mini-card { background: var(--surface); border: 1px solid var(--s3); border-radius: var(--r); padding: 16px 18px; border-left: 3px solid var(--ws-roll); }
+.mini-card.mc-album { border-left-color: var(--ws-roll); }
+.mini-card.mc-mix   { border-left-color: var(--ws-prod); }
+.mini-card.mc-distr { border-left-color: var(--ws-prod); }
+.mini-card.mc-list  { border-left-color: var(--ws-promo); }
+.mc-eyebrow { font-size: 9px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.mc-num { font-family: var(--font-d); font-size: 38px; line-height: 1; }
+.mc-unit { font-size: 11px; letter-spacing: .12em; color: var(--dim); text-transform: uppercase; margin-left: 4px; }
+.mc-label { font-size: 12px; color: var(--soft); margin-top: 6px; }
+.mc-date  { font-size: 11px; color: var(--muted); margin-top: 2px; letter-spacing: .04em; }
+
+/* Cards */
+.card { background: var(--surface); border: 1px solid var(--s3); border-radius: var(--r); padding: 18px; margin-bottom: 14px; }
+.card.lc-roxy   { border-left: 3px solid var(--ws-roxy); }
+.card.lc-promo  { border-left: 3px solid var(--ws-promo); }
+.card.lc-prod   { border-left: 3px solid var(--ws-prod); }
+.card.lc-roll   { border-left: 3px solid var(--ws-roll); }
+.card.lc-debt   { border-left: 3px solid var(--ws-debt); }
+.card.lc-net    { border-left: 3px solid var(--ws-net); }
+.card.lc-book   { border-left: 3px solid var(--ws-book); }
+.card.lc-tour   { border-left: 3px solid var(--ws-tour); }
+.card.lc-fam    { border-left: 3px solid var(--ws-fam); }
+.card.lc-rec    { border-left: 3px solid var(--ws-rec); }
+
+.ch { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.ch h2 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; color: var(--soft); }
+.ch .tag { margin-left: auto; font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 3px; letter-spacing: .08em; text-transform: uppercase; }
+.tag-roxy { background: var(--ws-roxy-bg); color: var(--ws-roxy); }
+.tag-promo { background: var(--ws-promo-bg); color: var(--ws-promo); }
+.tag-prod { background: var(--ws-prod-bg); color: var(--ws-prod); }
+.tag-roll { background: var(--ws-roll-bg); color: var(--ws-roll); }
+.tag-debt { background: var(--ws-debt-bg); color: var(--ws-debt); }
+.tag-net { background: var(--ws-net-bg); color: var(--ws-net); }
+.tag-book { background: var(--ws-book-bg); color: var(--ws-book); }
+.tag-tour { background: var(--ws-tour-bg); color: var(--ws-tour); }
+.tag-fam { background: var(--ws-fam-bg); color: var(--ws-fam); }
+.tag-job { background: var(--ws-job-bg); color: var(--ws-job); }
+.tag-rec { background: var(--ws-rec-bg); color: var(--ws-rec); }
+
+/* Trackers grid */
+.tracker-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.tr-card { background: var(--surface); border: 1px solid var(--s3); border-radius: var(--r); padding: 16px 18px; }
+.tr-eyebrow { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+.tr-input { display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px; }
+.tr-input input { width: 90px; background: none; border: none; color: var(--white); font-family: var(--font-d); font-size: 36px; line-height: 1; letter-spacing: .02em; padding: 0; outline: none; }
+.tr-input .of { font-family: var(--font-d); font-size: 18px; color: var(--muted); letter-spacing: .04em; }
+.tr-status { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; padding: 2px 8px; border-radius: 3px; display: inline-block; margin-bottom: 6px; }
+.st-behind { background: rgba(230,57,70,0.15); color: var(--st-behind); }
+.st-risk { background: rgba(244,162,97,0.15); color: var(--st-risk); }
+.st-on { background: rgba(42,157,143,0.15); color: var(--st-on); }
+.st-done { background: rgba(6,167,125,0.18); color: var(--st-done); }
+.st-pending { background: var(--s3); color: var(--muted); }
+.tr-bar { height: 6px; background: var(--s3); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+.tr-bar-fill { height: 100%; border-radius: 3px; transition: width .4s ease; }
+
+/* This week list */
+.tw-list { list-style: none; }
+.tw-item {
+  display: grid; grid-template-columns: 60px 14px 1fr auto;
+  gap: 10px; align-items: start;
+  padding: 10px 0; border-bottom: 1px solid var(--s3);
+}
+.tw-item:last-child { border-bottom: none; }
+.tw-day { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding-top: 2px; }
+.tw-item.is-today .tw-day { color: var(--ws-roxy); }
+.tw-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; }
+.tw-title { font-size: 13px; color: var(--soft); line-height: 1.4; }
+.tw-title .note { display: block; font-size: 11px; color: var(--muted); margin-top: 2px; }
+.tw-cost { font-size: 11px; color: var(--ws-rec); letter-spacing: .04em; padding-top: 2px; }
+.tw-item.is-critical .tw-title { color: var(--white); font-weight: 500; }
+.tw-export { font-size: 10px; background: var(--s3); border: 1px solid var(--s4); color: var(--soft); padding: 6px 12px; border-radius: 4px; letter-spacing: .08em; text-transform: uppercase; }
+.tw-export:hover { background: var(--s4); }
+
+/* Workstream status grid */
+.ws-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.ws-card { background: var(--surface); border: 1px solid var(--s3); border-radius: var(--r); padding: 14px 16px; border-left: 3px solid; }
+.ws-card[data-ws="roxy"]  { border-left-color: var(--ws-roxy); }
+.ws-card[data-ws="promo"] { border-left-color: var(--ws-promo); }
+.ws-card[data-ws="prod"]  { border-left-color: var(--ws-prod); }
+.ws-card[data-ws="roll"]  { border-left-color: var(--ws-roll); }
+.ws-card[data-ws="debt"]  { border-left-color: var(--ws-debt); }
+.ws-card[data-ws="net"]   { border-left-color: var(--ws-net); }
+.ws-card[data-ws="book"]  { border-left-color: var(--ws-book); }
+.ws-card[data-ws="tour"]  { border-left-color: var(--ws-tour); }
+.ws-label { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--soft); margin-bottom: 4px; }
+.ws-metric { font-family: var(--font-d); font-size: 24px; line-height: 1; }
+.ws-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.ws-status-pick { background: var(--s2); border: 1px solid var(--s4); color: var(--white); padding: 4px 8px; border-radius: 4px; font-size: 11px; margin-top: 8px; width: 100%; }
+
+/* Opener table */
+.op-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.op-table thead th { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); text-align: left; padding: 4px 8px 10px; border-bottom: 1px solid var(--s4); }
+.op-table thead th.right { text-align: right; }
+.op-table thead th.center { text-align: center; }
+.op-table tbody tr { border-bottom: 1px solid var(--s3); }
+.op-table tbody tr:last-child { border-bottom: none; }
+.op-table td { padding: 9px 8px; vertical-align: middle; }
+.op-name { background: none; border: none; color: var(--white); width: 100%; font-size: 13px; padding: 4px 0; outline: none; border-bottom: 1px solid transparent; }
+.op-name:focus { border-bottom-color: var(--s5); }
+.op-tickets { width: 70px; background: var(--s2); border: 1px solid var(--s4); border-radius: 4px; color: var(--white); padding: 5px 8px; text-align: right; outline: none; font-size: 13px; }
+.op-tickets:focus { border-color: var(--s5); }
+.op-tier-cell { text-align: center; }
+.op-tier-pill { display: inline-block; font-size: 10px; font-weight: 700; padding: 3px 10px; border-radius: 99px; letter-spacing: .08em; text-transform: uppercase; }
+.op-tier-cut       { background: var(--s3);                  color: var(--muted); }
+.op-tier-short     { background: rgba(108,117,125,0.20);     color: var(--dim); }
+.op-tier-standard  { background: rgba(58,134,255,0.18);      color: var(--ws-book); }
+.op-tier-elevated  { background: rgba(155,93,229,0.20);      color: var(--ws-net); }
+.op-tier-top       { background: var(--ws-roxy-bg);          color: var(--ws-roxy); border: 1px solid var(--ws-roxy); }
+
+/* Tier reference table */
+.tier-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.tier-table th { text-align: left; padding: 8px 10px; font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--s4); }
+.tier-table td { padding: 9px 10px; border-bottom: 1px solid var(--s3); color: var(--soft); }
+.tier-table tr:last-child td { border-bottom: none; }
+.tier-table .tname { font-weight: 600; color: var(--white); }
+
+/* Decisions list */
+.dec-list { list-style: none; }
+.dec-item { padding: 12px 0; border-bottom: 1px solid var(--s3); display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: start; }
+.dec-item:last-child { border-bottom: none; }
+.dec-item input[type="checkbox"] { margin-top: 4px; width: 16px; height: 16px; accent-color: var(--st-done); }
+.dec-item.resolved .dec-body .dec-title { text-decoration: line-through; color: var(--muted); }
+.dec-title { font-size: 13px; color: var(--white); margin-bottom: 3px; }
+.dec-note { font-size: 11px; color: var(--muted); line-height: 1.5; }
+.dec-deadline { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--ws-roxy); padding-top: 2px; white-space: nowrap; }
+.dec-item textarea { width: 100%; margin-top: 6px; background: var(--s2); border: 1px solid var(--s4); border-radius: 4px; color: var(--white); padding: 6px 8px; font-size: 12px; resize: vertical; min-height: 36px; outline: none; }
+.dec-item textarea:focus { border-color: var(--s5); }
+
+/* Calendar */
+.cal-filter { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.cal-filter button {
+  background: var(--s2); border: 1px solid var(--s3); color: var(--dim);
+  padding: 5px 10px; border-radius: 99px; font-size: 11px; letter-spacing: .06em;
+}
+.cal-filter button.on { background: var(--s4); color: var(--white); border-color: var(--s5); }
+.cal-filter button .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+.cal-month { margin-bottom: 22px; }
+.cal-month-head { font-family: var(--font-d); font-size: 22px; letter-spacing: .06em; padding-bottom: 8px; margin-bottom: 8px; border-bottom: 1px solid var(--s3); }
+.cal-day { padding: 10px 0; border-bottom: 1px solid var(--s3); display: grid; grid-template-columns: 70px 1fr; gap: 12px; }
+.cal-day:last-child { border-bottom: none; }
+.cal-day-label { font-size: 11px; letter-spacing: .06em; color: var(--muted); padding-top: 2px; }
+.cal-day-label .ddn { font-family: var(--font-d); font-size: 22px; color: var(--white); line-height: 1; display: block; margin-bottom: 2px; letter-spacing: .02em; }
+.cal-day.is-today .cal-day-label .ddn { color: var(--ws-roxy); }
+.cal-day.is-today { background: var(--ws-roxy-bg); border-radius: var(--r-sm); margin: 0 -8px; padding-left: 8px; padding-right: 8px; }
+.cal-events { display: flex; flex-direction: column; gap: 5px; }
+.cal-ev { display: grid; grid-template-columns: 8px 1fr auto; gap: 9px; align-items: start; padding: 4px 0; }
+.cal-ev-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; }
+.cal-ev-title { font-size: 13px; color: var(--soft); line-height: 1.4; }
+.cal-ev-title .ws-name { font-size: 9px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-right: 6px; }
+.cal-ev.is-critical .cal-ev-title { color: var(--white); font-weight: 500; }
+.cal-ev-cost { font-size: 11px; color: var(--ws-rec); padding-top: 3px; white-space: nowrap; }
+.cal-ev textarea { width: 100%; margin-top: 4px; background: var(--s2); border: 1px solid var(--s3); border-radius: 4px; color: var(--white); padding: 5px 8px; font-size: 12px; resize: vertical; min-height: 30px; outline: none; display: none; }
+.cal-ev.note-on textarea { display: block; }
+.cal-ev-note-btn { font-size: 10px; background: none; border: 1px solid var(--s4); color: var(--muted); padding: 2px 8px; border-radius: 3px; letter-spacing: .06em; text-transform: uppercase; margin-top: 4px; align-self: flex-start; }
+.cal-ev-note-btn:hover { color: var(--soft); border-color: var(--s5); }
+
+/* Tour panel */
+.tour-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.tour-card { background: var(--surface); border: 1px solid var(--s3); border-radius: var(--r); padding: 18px; border-left: 3px solid var(--ws-tour); }
+.tour-card.is-anchor { border-left-color: var(--ws-roxy); }
+.tour-loc { font-family: var(--font-d); font-size: 22px; letter-spacing: .04em; line-height: 1; margin-bottom: 4px; }
+.tour-when { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.tour-row { display: flex; gap: 6px; margin: 6px 0; align-items: baseline; }
+.tour-row label { font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); min-width: 70px; }
+.tour-row input, .tour-row select { flex: 1; background: var(--s2); border: 1px solid var(--s4); color: var(--white); padding: 5px 8px; border-radius: 4px; font-size: 12px; outline: none; }
+.tour-row input:focus, .tour-row select:focus { border-color: var(--s5); }
+.tour-row textarea { flex: 1; background: var(--s2); border: 1px solid var(--s4); color: var(--white); padding: 5px 8px; border-radius: 4px; font-size: 12px; outline: none; min-height: 48px; resize: vertical; }
+
+/* Generic fields */
+.fl { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: 5px; }
+.fg { margin-bottom: 14px; }
+input[type="text"], input[type="number"], textarea, select {
+  width: 100%; background: var(--s2); border: 1px solid var(--s4);
+  border-radius: var(--r-sm); padding: 8px 11px; color: var(--white); outline: none;
+  transition: border-color .12s;
+}
+input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:focus { border-color: var(--s5); }
+textarea { min-height: 72px; resize: vertical; }
+
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+/* Day blocks (weekly focus) */
+.db { background: var(--surface); border: 1px solid var(--s3); border-radius: var(--r); padding: 13px 15px; margin-bottom: 9px; }
+.db h3 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .11em; color: var(--muted); margin-bottom: 9px; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 9px; }
+.chip { font-size: 10px; padding: 3px 8px; border-radius: 3px; letter-spacing: .04em; }
+.chip-roxy { background: var(--ws-roxy-bg); color: var(--ws-roxy); }
+.chip-prod { background: var(--ws-prod-bg); color: var(--ws-prod); }
+.chip-promo { background: var(--ws-promo-bg); color: var(--ws-promo); }
+.chip-job { background: var(--ws-job-bg); color: var(--ws-job); }
+.chip-rec { background: var(--ws-rec-bg); color: var(--ws-rec); }
+.chip-fam { background: var(--ws-fam-bg); color: var(--ws-fam); }
+.chip-net { background: var(--ws-net-bg); color: var(--ws-net); }
+
+/* Budget styles */
+.bl { list-style: none; }
+.br { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--s3); font-size: 13px; }
+.br:last-child { border-bottom: none; }
+.bc { color: var(--muted); }
+.ba input { width: 90px; text-align: right; background: none; border: none; color: var(--white); padding: 0; }
+.ba input:focus { outline: none; }
+.btot { display: flex; justify-content: space-between; padding-top: 9px; font-size: 13px; border-top: 1px solid var(--s4); margin-top: 4px; color: var(--soft); }
+.ir { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--s3); }
+.ir:last-child { border-bottom: none; }
+.irlb { font-size: 13px; color: var(--muted); flex: 1; }
+.irv { display: flex; align-items: center; gap: 3px; color: var(--muted); font-size: 13px; }
+.irv input { width: 88px; text-align: right; }
+.metric { background: var(--s2); border-radius: var(--r-sm); padding: 11px 13px; }
+.ml { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-bottom: 3px; }
+.mv { font-size: 20px; }
+.ms { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+.sdiv { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); padding-bottom: 7px; margin: 18px 0 10px; border-bottom: 1px solid var(--s3); }
+
+/* Brand Bible scoped */
+#panel-brand { padding: 0; }
+.bb-wrap { font-family: 'Space Mono', monospace; background: var(--bg); color: #d4dce6; margin: 0 -26px -60px; }
+.bb-cover { min-height: 60vh; display: flex; flex-direction: column; justify-content: center; padding: 60px 40px; position: relative; background: linear-gradient(135deg, #0a0a0a 0%, #111218 40%, #1e3a5f 100%); overflow: hidden; }
+.bb-cover::after { content: 'SGAUGE'; position: absolute; right: -40px; top: 50%; transform: translateY(-50%) rotate(90deg); font-family: 'Bebas Neue', sans-serif; font-size: 160px; color: rgba(255,255,255,0.02); letter-spacing: 20px; white-space: nowrap; pointer-events: none; }
+.bb-eyebrow { font-size: 10px; letter-spacing: 4px; color: #c8a96e; text-transform: uppercase; margin-bottom: 18px; }
+.bb-title { font-family: 'Bebas Neue', sans-serif; font-size: clamp(52px, 8vw, 100px); line-height: 0.9; color: #e8edf2; letter-spacing: 4px; margin-bottom: 8px; }
+.bb-title span { color: #c8a96e; }
+.bb-subtitle { font-family: 'DM Serif Display', serif; font-style: italic; font-size: clamp(15px, 2.5vw, 22px); color: #b8c6d6; margin-bottom: 36px; }
+.bb-tagline { font-size: 11px; letter-spacing: 2px; color: #8a9bb0; border-left: 2px solid #c8a96e; padding-left: 14px; max-width: 440px; }
+.bb-meta { font-size: 10px; letter-spacing: 3px; color: #8a9bb0; text-transform: uppercase; margin-top: 30px; }
+.bb-section { padding: 48px 40px; border-top: 1px solid rgba(255,255,255,0.05); }
+.bb-section:nth-child(even) { background: #111218; }
+.bb-slabel { font-size: 10px; letter-spacing: 5px; color: #c8a96e; text-transform: uppercase; margin-bottom: 28px; display: flex; align-items: center; gap: 10px; }
+.bb-slabel::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, #8a6f3e, transparent); max-width: 180px; }
+.bb-stitle { font-family: 'Bebas Neue', sans-serif; font-size: clamp(32px, 5vw, 56px); line-height: 1; color: #e8edf2; letter-spacing: 2px; margin-bottom: 24px; }
+.bb-archgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin-top: 28px; }
+.bb-archcard { background: #1a1d26; padding: 26px; position: relative; overflow: hidden; transition: background 0.3s; }
+.bb-archcard:hover { background: #2a2f3e; }
+.bb-archcard::before { content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%; background: #c8a96e; }
+.bb-archcard-label { font-size: 9px; letter-spacing: 4px; color: #c8a96e; text-transform: uppercase; margin-bottom: 8px; }
+.bb-archcard-title { font-family: 'Bebas Neue', sans-serif; font-size: 24px; color: #e8edf2; letter-spacing: 2px; margin-bottom: 8px; }
+.bb-archcard p { color: #b8c6d6; font-size: 12px; line-height: 1.8; }
+.bb-quote { background: #1e3a5f; border-left: 4px solid #c8a96e; padding: 32px 40px; margin: 36px 0; position: relative; }
+.bb-quote::before { content: '"'; position: absolute; top: -14px; left: 24px; font-family: 'DM Serif Display', serif; font-size: 90px; color: #c8a96e; opacity: 0.3; line-height: 1; }
+.bb-quote p { font-family: 'DM Serif Display', serif; font-size: clamp(15px, 2vw, 20px); font-style: italic; color: #e8edf2; line-height: 1.5; position: relative; z-index: 1; }
+.bb-quote cite { display: block; margin-top: 12px; font-size: 10px; letter-spacing: 3px; color: #c8a96e; text-transform: uppercase; font-style: normal; }
+.bb-arctimeline { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-top: 28px; }
+.bb-arcphase { background: #1a1d26; padding: 28px 22px; position: relative; overflow: hidden; }
+.bb-arcphase::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #c8a96e, transparent); }
+.bb-arcnum { font-family: 'Bebas Neue', sans-serif; font-size: 52px; color: rgba(200,169,110,0.15); line-height: 1; margin-bottom: 4px; }
+.bb-arclabel { font-size: 9px; letter-spacing: 4px; color: #c8a96e; text-transform: uppercase; margin-bottom: 10px; }
+.bb-arctitle { font-family: 'Bebas Neue', sans-serif; font-size: 18px; color: #e8edf2; letter-spacing: 2px; margin-bottom: 12px; }
+.bb-arcphase p { color: #b8c6d6; font-size: 11px; line-height: 1.8; margin-bottom: 8px; }
+.bb-egogrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-top: 28px; }
+.bb-egocard { background: #1a1d26; padding: 28px; position: relative; overflow: hidden; transition: background 0.3s; }
+.bb-egocard:hover { background: #2a2f3e; }
+.bb-egocard::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #c8a96e, transparent); }
+.bb-egoname { font-family: 'Bebas Neue', sans-serif; font-size: 26px; color: #e8edf2; letter-spacing: 3px; margin-bottom: 6px; }
+.bb-egorole { font-size: 10px; letter-spacing: 2px; color: #c8a96e; text-transform: uppercase; margin-bottom: 14px; }
+.bb-egocard p { color: #b8c6d6; font-size: 12px; line-height: 1.8; }
+.bb-tagstack { margin-top: 20px; }
+.bb-tagitem { display: flex; align-items: flex-start; gap: 20px; padding: 18px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.bb-tagitem:last-child { border-bottom: none; }
+.bb-tagnum { font-size: 9px; letter-spacing: 3px; color: #8a9bb0; min-width: 28px; padding-top: 2px; }
+.bb-tagtext { font-family: 'DM Serif Display', serif; font-style: italic; font-size: clamp(14px, 2vw, 18px); color: #e8edf2; flex: 1; line-height: 1.4; }
+.bb-tagctx { font-size: 10px; letter-spacing: 2px; color: #c8a96e; text-transform: uppercase; white-space: nowrap; padding-top: 3px; }
+.bb-twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
+.bb-twocol p { color: #b8c6d6; font-size: 12px; line-height: 1.9; margin-bottom: 16px; }
+.bb-palette { display: flex; gap: 4px; margin-top: 14px; }
+.bb-swatch { flex: 1; height: 36px; border-radius: 3px; position: relative; }
+.bb-swatch span { position: absolute; bottom: -18px; left: 0; font-size: 9px; letter-spacing: 1px; color: #8a9bb0; white-space: nowrap; }
+.bb-brandrow { margin-top: 14px; }
+.bb-branditem { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.bb-brandlabel { font-size: 9px; letter-spacing: 3px; color: #8a9bb0; text-transform: uppercase; margin-bottom: 3px; }
+.bb-brandval { font-size: 14px; color: #e8edf2; }
+.bb-slist { list-style: none; }
+.bb-slist li { color: #b8c6d6; font-size: 12px; line-height: 1.9; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.bb-slist li::before { content: '—  '; color: #c8a96e; }
+.bb-slist .accent { color: #e8edf2; }
+.bb-manifesto { background: #111218; padding: 48px 40px; border-top: 1px solid rgba(255,255,255,0.05); }
+.bb-manifesto-text { font-family: 'DM Serif Display', serif; font-size: clamp(14px, 1.8vw, 20px); color: #e8edf2; line-height: 1.8; max-width: 800px; }
+.bb-manifesto-text em { color: #c8a96e; font-style: italic; }
+.bb-footer { background: #0a0a0a; padding: 32px 40px; border-top: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; }
+.bb-footer-logo { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 4px; color: #e8edf2; }
+.bb-footer-logo span { color: #c8a96e; }
+.bb-footer-meta { font-size: 10px; letter-spacing: 2px; color: #8a9bb0; text-align: right; line-height: 2; text-transform: uppercase; }
+
+/* Insider Circle scoped */
+.ic-goals-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 14px; }
+.ic-goal-card { background: var(--s2); border: 1px solid var(--s3); border-radius: var(--r-sm); padding: 12px 14px; }
+.ic-goal-num { font-family: var(--font-d); font-size: 22px; color: var(--white); margin: 0 0 2px; }
+.ic-goal-lbl { font-size: 11px; color: var(--muted); }
+.ic-pbar-wrap { background: var(--s3); border-radius: 99px; height: 6px; margin: 14px 0 6px; }
+.ic-pbar { background: var(--ws-net); height: 6px; border-radius: 99px; width: 0%; transition: width 0.6s ease; }
+.ic-plabels { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 16px; }
+.ic-tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin: 4px 0 18px; }
+.ic-tier { background: var(--s2); border: 1px solid var(--s3); border-radius: var(--r); padding: 14px 16px; }
+.ic-tier.featured { border-color: var(--ws-net); }
+.ic-badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 3px; margin-bottom: 8px; background: var(--ws-net-bg); color: var(--ws-net); letter-spacing: .04em; text-transform: uppercase; }
+.ic-tier.featured .ic-badge { background: var(--ws-net); color: var(--white); }
+.ic-price { font-family: var(--font-d); font-size: 26px; color: var(--white); margin: 0 0 2px; }
+.ic-tier-name { font-size: 11px; color: var(--muted); margin: 0 0 10px; }
+.ic-perks { list-style: none; }
+.ic-perks li { font-size: 12px; color: var(--soft); padding: 4px 0; border-top: 1px solid var(--s3); }
+.ic-perks li:first-child { border-top: none; }
+.ic-perks li::before { content: "— "; color: var(--ws-net); }
+.ic-timeline { display: flex; flex-direction: column; }
+.ic-tl-row { display: flex; gap: 14px; align-items: flex-start; }
+.ic-spine { display: flex; flex-direction: column; align-items: center; }
+.ic-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--ws-net); flex-shrink: 0; margin-top: 5px; }
+.ic-line { width: 1px; background: var(--s4); flex: 1; min-height: 22px; }
+.ic-tl-content { padding-bottom: 18px; }
+.ic-tl-week { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 2px; }
+.ic-tl-task { font-size: 13px; color: var(--white); margin: 0; }
+.ic-tl-sub { font-size: 12px; color: var(--dim); margin: 3px 0 0; line-height: 1.5; }
+.ic-raised-input { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
+.ic-raised-input label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); white-space: nowrap; }
+.ic-raised-input input { width: 120px; }
+
+/* Album budget tracker (kept from old) */
+.abt-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+.abt-total-wrap { text-align: right; }
+.abt-total-num { font-family: var(--font-d); font-size: 32px; color: var(--ws-rec); letter-spacing: .02em; line-height: 1; }
+.abt-total-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin-top: 2px; }
+.abt-funding { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; margin-bottom: 18px; }
+.abt-fund-card { background: var(--s3); border-radius: var(--r-sm); padding: 12px 14px; border-left: 3px solid; }
+.abt-fund-card.trade { border-color: var(--ws-roll); }
+.abt-fund-card.campaign { border-color: var(--ws-net); }
+.abt-fund-card.sprint { border-color: var(--ws-rec); }
+.abt-fund-amt { font-family: var(--font-d); font-size: 22px; line-height: 1; margin-bottom: 3px; }
+.abt-fund-card.trade .abt-fund-amt { color: var(--ws-roll); }
+.abt-fund-card.campaign .abt-fund-amt { color: var(--ws-net); }
+.abt-fund-card.sprint .abt-fund-amt { color: var(--ws-rec); }
+.abt-fund-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); }
+.abt-section-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); padding-bottom: 6px; margin: 16px 0 8px; border-bottom: 1px solid var(--s3); }
+.abt-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.abt-table thead th { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .09em; color: var(--muted); text-align: left; padding: 4px 6px 8px; border-bottom: 1px solid var(--s4); }
+.abt-table thead th.right { text-align: right; }
+.abt-table tbody tr { border-bottom: 1px solid var(--s3); }
+.abt-table tbody tr:last-child { border-bottom: none; }
+.abt-table td { padding: 9px 6px; vertical-align: top; line-height: 1.4; }
+.abt-item-name { font-size: 13px; color: var(--white); display: block; }
+.abt-item-sub { font-size: 10px; color: var(--muted); display: block; margin-top: 1px; }
+.abt-item-note { font-size: 12px; color: var(--dim); }
+.abt-cost { font-size: 13px; color: var(--white); text-align: right; white-space: nowrap; }
+.abt-cost.zero { color: var(--muted); }
+.abt-src-badge { display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 2px 7px; border-radius: 3px; white-space: nowrap; }
+.abt-src-badge.trade { background: var(--ws-roll-bg); color: var(--ws-roll); }
+.abt-src-badge.campaign { background: var(--ws-net-bg); color: var(--ws-net); }
+.abt-src-badge.sprint { background: var(--ws-rec-bg); color: var(--ws-rec); }
+.abt-src-badge.inhouse { background: var(--s3); color: var(--muted); }
+.abt-subtotal { display: flex; justify-content: space-between; align-items: center; padding: 10px 6px; margin-top: 6px; border-top: 1px solid var(--s4); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.abt-subtotal span:last-child { color: var(--ws-rec); font-family: var(--font-d); font-size: 18px; letter-spacing: .02em; }
+.abt-party-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; }
+.abt-party-item { background: var(--s3); border-radius: var(--r-sm); padding: 10px 12px; }
+.abt-party-amt { font-family: var(--font-d); font-size: 20px; color: var(--white); line-height: 1; }
+.abt-party-lbl { font-size: 10px; color: var(--muted); margin-top: 3px; line-height: 1.3; }
+.abt-legend { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; font-size: 11px; color: var(--muted); align-items: center; }
+.abt-editable { background: none; border: none; color: var(--white); font-family: var(--font); font-size: 13px; width: 70px; text-align: right; padding: 0; }
+.abt-editable:focus { outline: none; color: var(--ws-rec); }
+
+/* Export modal */
+.modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; }
+.modal-bg.on { display: flex; }
+.modal { background: var(--surface); border: 1px solid var(--s4); border-radius: var(--r); padding: 18px; max-width: 540px; width: 100%; max-height: 80vh; display: flex; flex-direction: column; }
+.modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.modal-head h3 { font-family: var(--font-d); font-size: 18px; letter-spacing: .04em; }
+.modal-head button { background: var(--s3); border: none; color: var(--white); padding: 5px 10px; border-radius: 4px; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+.modal textarea { flex: 1; min-height: 240px; font-family: 'Space Mono', monospace; font-size: 12px; }
+
+/* ── MOBILE ─────────────────────────────────────────────── */
+@media (max-width: 800px) {
+  body { font-size: 13px; }
+  .app { flex-direction: column; }
+  .sidebar {
+    position: fixed; top: 0; left: 0; height: 100vh; width: 240px;
+    transform: translateX(-100%); transition: transform .22s ease;
+    box-shadow: 0 0 30px rgba(0,0,0,0.5);
+  }
+  .sidebar.open { transform: translateX(0); }
+  .sb-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 25; display: none; }
+  .sb-backdrop.on { display: block; }
+  .tb-burger { display: flex; align-items: center; justify-content: center; }
+  .topbar { padding: 14px 16px; }
+  .tb-title { font-size: 22px; }
+  .tb-right { display: none; }
+  .wstrip { padding: 10px 14px; gap: 3px; }
+  .wd { padding: 5px 2px; min-height: 56px; }
+  .wdnum { font-size: 17px; }
+  .content { padding: 14px 14px 60px; }
+  .roxy-hero { padding: 22px 18px; }
+  .roxy-hero::before { font-size: 100px; right: -25px; }
+  .mini-row { grid-template-columns: 1fr 1fr; }
+  .tracker-row { grid-template-columns: 1fr; }
+  .g2, .g3 { grid-template-columns: 1fr; }
+  .tour-grid { grid-template-columns: 1fr; }
+  .bb-archgrid, .bb-arctimeline, .bb-egogrid, .bb-twocol { grid-template-columns: 1fr; }
+  .bb-cover, .bb-section, .bb-manifesto, .bb-footer { padding-left: 22px; padding-right: 22px; }
+  .bb-tagitem { flex-direction: column; gap: 6px; }
+  .op-table { font-size: 12px; }
+  .op-table td, .op-table th { padding: 7px 5px; }
+  .op-tickets { width: 56px; padding: 4px 6px; }
+  .cal-day { grid-template-columns: 56px 1fr; }
+  .tier-table { font-size: 11px; }
+  .tier-table th, .tier-table td { padding: 6px 6px; }
+}
+@media (max-width: 480px) {
+  .mini-row { grid-template-columns: 1fr; }
+  .wstrip { grid-template-columns: repeat(7, 1fr); }
+  .wd .wdtag { display: none; }
+  .roxy-count { font-size: 64px; }
+  .ws-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ── SIDEBAR ─────────────────────────────────────────── -->
+<div class="sb-backdrop" id="sbBackdrop" onclick="toggleSB()"></div>
+<aside class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-mark">G</div>
+    <div class="sb-tx"><h1>GAUGE CC</h1><p>July 4 / Roxy</p></div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-glabel">Mission Control</div>
+    <button class="nb active" onclick="go('dashboard')"><span class="dot" style="background:var(--ws-roxy)"></span>Command</button>
+    <button class="nb" onclick="go('calendar')"><span class="dot" style="background:var(--ws-rec)"></span>Calendar</button>
+    <button class="nb" onclick="go('openers')"><span class="dot" style="background:var(--ws-promo)"></span>Openers</button>
+    <button class="nb" onclick="go('tour')"><span class="dot" style="background:var(--ws-tour)"></span>Tour</button>
+    <button class="nb" onclick="go('workstreams')"><span class="dot" style="background:var(--ws-net)"></span>Workstreams</button>
+    <button class="nb" onclick="go('decisions')"><span class="dot" style="background:var(--ws-debt)"></span>Decisions</button>
+
+    <div class="sb-glabel">Reference</div>
+    <button class="nb" onclick="go('brand')"><span class="dot" style="background:#c8a96e"></span>Brand Bible</button>
+    <button class="nb" onclick="go('insider')"><span class="dot" style="background:var(--ws-net)"></span>Insider Circle</button>
+    <button class="nb" onclick="go('weekly')"><span class="dot" style="background:var(--ws-rec)"></span>Weekly Focus</button>
+    <button class="nb" onclick="go('budget')"><span class="dot" style="background:var(--ws-job)"></span>Budget</button>
+  </nav>
+  <div class="sb-bot">
+    <div class="sb-foot" id="wklabel">Week of —</div>
+    <div class="sb-flash" id="saveFlash">Saved</div>
+    <button class="sb-reset" onclick="resetAll()">Reset all</button>
+  </div>
+</aside>
+
+<!-- ── MAIN ────────────────────────────────────────────── -->
+<main class="main">
+  <div class="topbar">
+    <button class="tb-burger" onclick="toggleSB()">&#9776;</button>
+    <div>
+      <div class="tb-title" id="ptitle">Command</div>
+      <div class="tb-sub" id="psub">Roxy headline · July 4 · Same Old Gauge drop</div>
+    </div>
+    <div class="tb-right" id="datedisp"></div>
+  </div>
+
+  <div class="wstrip" id="wstrip"></div>
+
+  <div class="content">
+
+  <!-- ═══════════ DASHBOARD ═══════════ -->
+  <div class="panel active" id="panel-dashboard">
+
+    <!-- ROXY HERO -->
+    <div class="roxy-hero">
+      <div class="roxy-eyebrow">North star · headline show · album drop</div>
+      <div class="roxy-count"><span id="roxyDays">—</span><span class="unit">days</span></div>
+      <div class="roxy-tagline">July 4, 2026 — The Roxy Denver. Same Old Gauge album release. Everything between now and that night is fuel.</div>
+      <div class="roxy-meta">
+        <span>200 ticket target</span>
+        <span>100 personal</span>
+        <span>8 openers</span>
+        <span>Then mini-tour</span>
+      </div>
+      <div class="roxy-prog">
+        <div class="roxy-prog-head">
+          <span>Ticket sales</span>
+          <span class="num"><span id="ticketSold">0</span> / 200</span>
+        </div>
+        <div class="roxy-bar"><div class="roxy-bar-fill" id="ticketBar" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <!-- MINI COUNTDOWNS -->
+    <div class="mini-row">
+      <div class="mini-card mc-mix">
+        <div class="mc-eyebrow">Ignorance mixtape</div>
+        <div><span class="mc-num" id="ignDays">—</span><span class="mc-unit">days</span></div>
+        <div class="mc-label">Drop · DSP release</div>
+        <div class="mc-date">May 20, 2026</div>
+      </div>
+      <div class="mini-card mc-album">
+        <div class="mc-eyebrow">Same Old Gauge</div>
+        <div><span class="mc-num" id="albDays">—</span><span class="mc-unit">days</span></div>
+        <div class="mc-label">Album drop · Roxy night</div>
+        <div class="mc-date">July 4, 2026</div>
+      </div>
+      <div class="mini-card mc-distr">
+        <div class="mc-eyebrow">DistroKid upload</div>
+        <div><span class="mc-num" id="distDays">—</span><span class="mc-unit">days</span></div>
+        <div class="mc-label">Album to DSPs</div>
+        <div class="mc-date">May 27, 2026 — $40</div>
+      </div>
+      <div class="mini-card mc-list">
+        <div class="mc-eyebrow">Listening party</div>
+        <div><span class="mc-num" id="lpDays">—</span><span class="mc-unit">days</span></div>
+        <div class="mc-label">Doc screening + party</div>
+        <div class="mc-date">June 19, 2026</div>
+      </div>
+    </div>
+
+    <!-- TRACKERS -->
+    <div class="tracker-row">
+      <div class="tr-card" style="border-left:3px solid var(--ws-promo);">
+        <div class="tr-eyebrow">Personal ticket sales</div>
+        <div class="tr-input"><input type="number" id="personalSold" data-key="personalSold" min="0" placeholder="0" oninput="recalcTickets()"><span class="of">/ 100</span></div>
+        <span class="tr-status" id="personalStatus">PENDING</span>
+        <div class="tr-bar"><div class="tr-bar-fill" id="personalBar" style="width:0%;background:var(--ws-promo);"></div></div>
+        <div class="ms" style="margin-top:8px;">Last year: 45 · target = 100</div>
+      </div>
+      <div class="tr-card" style="border-left:3px solid var(--ws-roxy);">
+        <div class="tr-eyebrow">Total room sales</div>
+        <div class="tr-input"><input type="number" id="totalSold" data-key="totalSold" min="0" placeholder="0" oninput="recalcTickets()"><span class="of">/ 200</span></div>
+        <span class="tr-status" id="totalStatus">PENDING</span>
+        <div class="tr-bar"><div class="tr-bar-fill" id="totalBar" style="width:0%;background:var(--ws-roxy);"></div></div>
+        <div class="ms" style="margin-top:8px;">Last year: 90 · target = 200 (2.2x)</div>
+      </div>
+    </div>
+
+    <!-- THIS WEEK -->
+    <div class="card">
+      <div class="ch">
+        <h2>This week</h2>
+        <span class="tag" style="background:var(--s3);color:var(--soft);" id="wkRange">May —</span>
+        <button class="tw-export" onclick="exportWeek()" style="margin-left:6px;">Export</button>
+      </div>
+      <ul class="tw-list" id="thisWeek"></ul>
+    </div>
+
+    <!-- WORKSTREAM STATUS -->
+    <div class="card">
+      <div class="ch"><h2>Workstream status</h2><span class="tag" style="background:var(--s3);color:var(--soft);">11 lanes</span></div>
+      <div class="ws-grid" id="wsGrid"></div>
+    </div>
+
+    <!-- OPENER TIER REFERENCE -->
+    <div class="card lc-promo">
+      <div class="ch"><h2>Opener tier table</h2><span class="tag tag-promo">Reference</span></div>
+      <table class="tier-table">
+        <thead><tr><th>Tier</th><th>Tickets</th><th>Set length</th><th>Bonus</th></tr></thead>
+        <tbody>
+          <tr><td class="tname">Cut</td><td>0</td><td>None</td><td>Removed from bill</td></tr>
+          <tr><td class="tname">Short</td><td>1–9</td><td>3 songs max</td><td>None</td></tr>
+          <tr><td class="tname">Standard</td><td>10–19</td><td>15 min</td><td>Standard slot</td></tr>
+          <tr><td class="tname">Elevated</td><td>20–24</td><td>20 min</td><td>Better slot</td></tr>
+          <tr><td class="tname">Top</td><td>25+</td><td>25 min max</td><td>Profit cut OR free studio session</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- CRITICAL DECISIONS SUMMARY -->
+    <div class="card lc-debt">
+      <div class="ch"><h2>Critical decisions pending</h2><span class="tag tag-debt">Action</span></div>
+      <ul class="dec-list" id="decSummary"></ul>
+    </div>
+
+  </div><!-- /dashboard -->
+
+  <!-- ═══════════ CALENDAR ═══════════ -->
+  <div class="panel" id="panel-calendar">
+    <div class="card">
+      <div class="ch"><h2>Filter by workstream</h2><button class="tw-export" onclick="setFilter('all')" id="filterAllBtn">Show all</button></div>
+      <div class="cal-filter" id="calFilter"></div>
+    </div>
+    <div id="calendar"></div>
+  </div>
+
+  <!-- ═══════════ OPENERS ═══════════ -->
+  <div class="panel" id="panel-openers">
+    <div class="card lc-promo">
+      <div class="ch"><h2>Opener tracker</h2><span class="tag tag-promo">8 slots · 80 ticket floor</span></div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Type opener names, log ticket counts as they sell. Tier is computed automatically — set length and bonus follow the table.</p>
+      <table class="op-table">
+        <thead><tr><th>#</th><th>Opener</th><th class="right">Tickets</th><th class="center">Tier</th><th class="right">Set</th></tr></thead>
+        <tbody id="opBody"></tbody>
+        <tfoot>
+          <tr><td colspan="2" style="padding-top:14px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);">Opener floor total</td><td class="right" style="padding-top:14px;font-family:var(--font-d);font-size:18px;color:var(--white);" id="opTotal">0</td><td colspan="2" style="padding-top:14px;font-size:11px;color:var(--muted);">of 80 minimum (10 × 8)</td></tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="ch"><h2>Tier reference</h2></div>
+      <table class="tier-table">
+        <thead><tr><th>Tier</th><th>Tickets</th><th>Set length</th><th>Bonus</th></tr></thead>
+        <tbody>
+          <tr><td class="tname">Cut</td><td>0</td><td>None</td><td>Removed from bill</td></tr>
+          <tr><td class="tname">Short</td><td>1–9</td><td>3 songs max</td><td>None</td></tr>
+          <tr><td class="tname">Standard</td><td>10–19</td><td>15 min</td><td>Standard slot</td></tr>
+          <tr><td class="tname">Elevated</td><td>20–24</td><td>20 min</td><td>Better slot</td></tr>
+          <tr><td class="tname">Top</td><td>25+</td><td>25 min max</td><td>Profit cut OR free studio session</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="ch"><h2>Opener notes</h2></div>
+      <textarea data-key="opener_notes" placeholder="Opener agreements sent? Who's pushing hard, who's silent? Replacements if a slot folds..."></textarea>
+    </div>
+  </div>
+
+  <!-- ═══════════ TOUR ═══════════ -->
+  <div class="panel" id="panel-tour">
+    <div class="card lc-roxy" style="border-left-color:var(--ws-roxy);">
+      <div class="ch"><h2>Anchor: Roxy Denver</h2><span class="tag tag-roxy">7/4 · Locked</span></div>
+      <p style="font-size:13px;color:var(--soft);line-height:1.6;">Everything before July 4 funnels into this. Everything after is the rollout. Hard date — no flex.</p>
+      <div style="margin-top:10px;font-size:11px;color:var(--muted);letter-spacing:.06em;">July 4, 2026 · The Roxy Theatre · Denver, CO · 200 capacity target</div>
+    </div>
+
+    <div class="tour-grid" id="tourGrid"></div>
+
+    <div class="card lc-tour">
+      <div class="ch"><h2>Tour rationale</h2><span class="tag tag-tour">Routing</span></div>
+      <p style="font-size:12px;color:var(--soft);line-height:1.7;">Mini-tour rule: if SD/LA, Vegas/AZ are unbooked by June 15, drop the "mini-tour" framing and rebuild as a two-show run — Bay Area open (7/9) and Denver close (7/30). Confirmation deadline is hard.</p>
+    </div>
+
+    <div class="card">
+      <div class="ch"><h2>Tour notes</h2></div>
+      <textarea data-key="tour_notes" placeholder="Outreach status, promoter responses, gas/lodging plan, who's coming on the road..."></textarea>
+    </div>
+  </div>
+
+  <!-- ═══════════ WORKSTREAMS ═══════════ -->
+  <div class="panel" id="panel-workstreams">
+    <div class="card">
+      <div class="ch"><h2>Workstream notes</h2><span class="tag" style="background:var(--s3);color:var(--soft);">Status + notes</span></div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">Each lane gets a status read and a notes block. Update as work moves.</p>
+      <div id="wsDetail"></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ DECISIONS ═══════════ -->
+  <div class="panel" id="panel-decisions">
+    <div class="card lc-debt">
+      <div class="ch"><h2>Critical decisions pending</h2><span class="tag tag-debt">Locks & risks</span></div>
+      <ul class="dec-list" id="decFull"></ul>
+    </div>
+
+    <div class="card">
+      <div class="ch"><h2>Open questions to answer</h2><span class="tag" style="background:var(--s3);color:var(--soft);">Fill in</span></div>
+      <div class="fg">
+        <div class="fl">July 25 Rhody / DeMond show — cut or pending?</div>
+        <textarea data-key="oq_jul25" placeholder="Status..."></textarea>
+      </div>
+      <div class="fg">
+        <div class="fl">Final album mix completion date (songs 3 &amp; 4)</div>
+        <input type="text" data-key="oq_mixdate" placeholder="e.g. June 18, 2026" />
+      </div>
+      <div class="fg">
+        <div class="fl">Opener slots — locked vs TBD</div>
+        <textarea data-key="oq_openers" placeholder="Who's confirmed, who's TBD, who's a backup..."></textarea>
+      </div>
+      <div class="fg">
+        <div class="fl">Listening party — venue + capacity</div>
+        <input type="text" data-key="oq_lp_venue" placeholder="Venue name" />
+        <input type="text" data-key="oq_lp_capacity" placeholder="Capacity" style="margin-top:6px;" />
+      </div>
+      <div class="fg">
+        <div class="fl">Bliss + Ignorance stream count (manual)</div>
+        <div class="g2">
+          <input type="number" data-key="streams_bliss" placeholder="Bliss streams" />
+          <input type="number" data-key="streams_ign" placeholder="Ignorance streams" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ BRAND BIBLE (kept) ═══════════ -->
+  <div class="panel" id="panel-brand">
+    <div class="bb-wrap">
+      <div class="bb-cover">
+        <div class="bb-eyebrow">Artist Brand Bible · v1.0</div>
+        <div class="bb-title">S<span>GAUGE</span></div>
+        <div class="bb-subtitle">Shawn Gladue · Denver, CO · Est. 2010</div>
+        <div class="bb-tagline">"Rapdad, back at it like a crack addict — can't quit if I wanted to."</div>
+        <div class="bb-meta">Upbeat Pain · Maktub · Same Ol' Gauge</div>
+      </div>
+
+      <div class="bb-section">
+        <div class="bb-slabel">01 — Identity &amp; Archetype</div>
+        <div class="bb-stitle">WHO IS<br>SGAUGE</div>
+        <p style="color:#b8c6d6;font-size:12px;line-height:1.9;max-width:700px;">SGauge is the synthesis of contradictions held without apology. West coast melody filtered through Colorado survival. Engineering precision behind an artist's vulnerability. A father who turned the hardest year of his life into the foundation of everything he's building.</p>
+        <div class="bb-archgrid">
+          <div class="bb-archcard">
+            <div class="bb-archcard-label">Primary Archetype</div>
+            <div class="bb-archcard-title">THE SURVIVOR SAGE</div>
+            <p>The one who went through it and came back with receipts. Not performing pain — reporting it. The wisdom of a person who had no map and drew their own.</p>
+          </div>
+          <div class="bb-archcard">
+            <div class="bb-archcard-label">Secondary Archetype</div>
+            <div class="bb-archcard-title">THE BUILDER OUTLAW</div>
+            <p>Operates outside the system while building within it. Engineer, developer, A&amp;R, artist — simultaneously. The infrastructure guy who's also the product.</p>
+          </div>
+          <div class="bb-archcard">
+            <div class="bb-archcard-label">Sonic Identity</div>
+            <div class="bb-archcard-title">UPBEAT PAIN</div>
+            <p>West coast melodic influence with a Colorado edge. Vibey enough to sing along to. Heavy enough that you feel the weight underneath. Joy and grief in the same bar.</p>
+          </div>
+          <div class="bb-archcard">
+            <div class="bb-archcard-label">Influences</div>
+            <div class="bb-archcard-title">THE REFERENCE POINTS</div>
+            <p>Mike Posner, Jay Sean, A Boogie wit da Hoodie, Colbie Caillat, Grieves, Slug of Atmosphere. The ones who made something personal feel universal.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bb-manifesto">
+        <div class="bb-slabel" style="margin-bottom:28px;">02 — Artist Manifesto</div>
+        <div class="bb-manifesto-text">
+          I come from the part of Littleton nobody admits exists. I come from a mother's addiction and a father's prison sentence and a floor that wasn't mine to sleep on. I started rapping because <em>I had something to say and nowhere safe to say it.</em><br><br>
+          I became an engineer because I refused to wait for someone else to build my door. I became a developer because I remember what it cost to have no one in my corner. I became RAPDAD because <em>Nelliana deserves a father who turned the worst year of his life into something that outlasts it.</em><br><br>
+          I am not performing. I am not a character. I am SGauge — the same person you'll meet in the studio, on the stage, and at the funeral. <em>Maktub. It was written.</em> All of it.
+        </div>
+      </div>
+
+      <div class="bb-section">
+        <div class="bb-slabel">03 — Career Storyline</div>
+        <div class="bb-stitle">SAME OL'<br>GAUGE</div>
+        <p style="color:#b8c6d6;font-size:12px;line-height:1.9;max-width:700px;margin-bottom:8px;">The arc is a hood story with a survivor's ending. Not glory for glory's sake — redemption as <em style="color:#c8a96e;">stability</em>. The right to stop working regular jobs and finally belong to the industry you've been building from the inside.</p>
+        <div class="bb-arctimeline">
+          <div class="bb-arcphase">
+            <div class="bb-arcnum">I</div>
+            <div class="bb-arclabel">Act One</div>
+            <div class="bb-arctitle">THE LOST SHEEP</div>
+            <p>East Denver born. Littleton raised. Half-homeless at 14, writing on a friend's floor. The music starts as survival — pure need to translate chaos into something that makes sense.</p>
+          </div>
+          <div class="bb-arcphase">
+            <div class="bb-arcnum">II</div>
+            <div class="bb-arclabel">Act Two</div>
+            <div class="bb-arctitle">SCREAMING INTO THE VOID</div>
+            <p>The awakening comes. He builds the infrastructure — engineering, production, A&amp;R, media platform, artist development. He feeds everyone. And yet the universe still hasn't fully aligned.</p>
+          </div>
+          <div class="bb-arcphase">
+            <div class="bb-arcnum">III</div>
+            <div class="bb-arclabel">Act Three</div>
+            <div class="bb-arctitle">GLORY RECLAIMED</div>
+            <p>Not fame. Not a platinum plaque. <em style="color:#c8a96e;">Belonging.</em> A seat at the table he helped build. The music finally reaches the people it was always meant for.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bb-section">
+        <div class="bb-slabel">04 — The Characters</div>
+        <div class="bb-stitle">THE THREE<br>FACES</div>
+        <div class="bb-egogrid">
+          <div class="bb-egocard">
+            <div class="bb-egoname">SGAUGE</div>
+            <div class="bb-egorole">The Core · The Real · The Artist</div>
+            <p>Straight Shawn with the filter off. No performance, no persona — just the duality of mixed heritage and lived experience translated into west coast-influenced Colorado sound.</p>
+          </div>
+          <div class="bb-egocard">
+            <div class="bb-egoname">SHADY O'RAQ</div>
+            <div class="bb-egorole">The Shadow · The Release Valve</div>
+            <p>The part that doesn't have to be responsible. Darker, more reckless, less filtered. Not a lie — an extreme. The hood story without the hope at the end.</p>
+          </div>
+          <div class="bb-egocard">
+            <div class="bb-egoname">IICYBABII</div>
+            <div class="bb-egorole">The Feminine · The Contrast</div>
+            <p>The melodic softness fully unleashed. Pure melodic songwriting unconstrained by street credibility. A creative pressure valve.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bb-section">
+        <div class="bb-slabel">05 — Signatures &amp; Taglines</div>
+        <div class="bb-stitle">THE LINES<br>THAT STICK</div>
+        <div class="bb-tagstack">
+          <div class="bb-tagitem"><span class="bb-tagnum">01</span><span class="bb-tagtext">"Rapdad, back at it like a crack addict — can't quit if I wanted to."</span><span class="bb-tagctx">Primary Signature</span></div>
+          <div class="bb-tagitem"><span class="bb-tagnum">02</span><span class="bb-tagtext">"Upbeat Pain."</span><span class="bb-tagctx">Sonic Identity</span></div>
+          <div class="bb-tagitem"><span class="bb-tagnum">03</span><span class="bb-tagtext">"Swing My Way."</span><span class="bb-tagctx">Recurring Call / Closing Tag</span></div>
+          <div class="bb-tagitem"><span class="bb-tagnum">04</span><span class="bb-tagtext">"Maktub." — It was written.</span><span class="bb-tagctx">Philosophical Core</span></div>
+          <div class="bb-tagitem"><span class="bb-tagnum">05</span><span class="bb-tagtext">"Same Ol' Gauge." — Success didn't change him.</span><span class="bb-tagctx">Career Thesis</span></div>
+          <div class="bb-tagitem"><span class="bb-tagnum">06</span><span class="bb-tagtext">"For the dope babies and the hood heroes."</span><span class="bb-tagctx">Audience Declaration</span></div>
+          <div class="bb-tagitem"><span class="bb-tagnum">07</span><span class="bb-tagtext">"I really hope to see everybody I fed at the funeral."</span><span class="bb-tagctx">Signature Bar — Funeral</span></div>
+        </div>
+      </div>
+
+      <div class="bb-section" style="padding-top:0;padding-bottom:0;">
+        <div class="bb-quote">
+          <p>Baby, let me get this bread. I heard everything you said. Trynna make my bed, before I fuck around and wind up dead. I really hope to see everybody I fed at the funeral.</p>
+          <cite>SGauge — "Funeral" (Upcoming Single)</cite>
+        </div>
+      </div>
+
+      <div class="bb-section">
+        <div class="bb-slabel">06 — Visual Identity &amp; Packaging</div>
+        <div class="bb-stitle">THE LOOK OF<br>UPBEAT PAIN</div>
+        <div class="bb-twocol">
+          <div>
+            <p><span class="accent" style="color:#e8edf2;">Aesthetic Direction:</span> Dark, sleek, city-built. The visual language of a person who came up in the shadows. Not loud. Not flashy. <em style="color:#c8a96e;">Sharp.</em> Like a samurai who also skates. Bandana with Cartier frames and makes it feel inevitable.</p>
+            <p><span class="accent" style="color:#e8edf2;">Visual References:</span> Nighttime cityscapes. Long curly hair in a bun against a dark skyline. Scarred face lit dramatically — the scars are not hidden, they're the story.</p>
+            <p><span class="accent" style="color:#e8edf2;">Photography Direction:</span> Low-key lighting. Blue and grey tones with warm amber accents. Character over beauty. No heavy retouching. This face has been somewhere.</p>
+          </div>
+          <div>
+            <div class="bb-brandrow">
+              <div class="bb-branditem"><div class="bb-brandlabel">Primary Font Energy</div><div class="bb-brandval">Bold condensed + serif contrast</div></div>
+              <div class="bb-branditem"><div class="bb-brandlabel">Motif</div><div class="bb-brandval">Duality / The split frame</div></div>
+              <div class="bb-branditem"><div class="bb-brandlabel">Symbol</div><div class="bb-brandval">The gauge / pressure meter</div></div>
+            </div>
+            <div class="bb-palette" style="margin-top:28px;">
+              <div class="bb-swatch" style="background:#0a0a0a;"><span>Void</span></div>
+              <div class="bb-swatch" style="background:#111218;"><span>Dark</span></div>
+              <div class="bb-swatch" style="background:#1e3a5f;"><span>Deep Blue</span></div>
+              <div class="bb-swatch" style="background:#2d5a8e;"><span>Steel</span></div>
+              <div class="bb-swatch" style="background:#8a9bb0;"><span>Fog</span></div>
+              <div class="bb-swatch" style="background:#c8a96e;"><span>Gold</span></div>
+              <div class="bb-swatch" style="background:#e8edf2;"><span>Ice</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bb-section">
+        <div class="bb-slabel">07 — Marketability Profile</div>
+        <div class="bb-stitle">WHY THIS<br>LANDS</div>
+        <div class="bb-twocol">
+          <ul class="bb-slist">
+            <li><span class="accent">Self-sufficient production</span> — No studio costs. Radio-ready output on demand. Lower barrier, faster output, full creative control.</li>
+            <li><span class="accent">Multi-role infrastructure</span> — SGauge + RAPDAD55 + RapClass creates three entry points into the same ecosystem.</li>
+            <li><span class="accent">Built-in credibility gap</span> — Known as engineer/developer before artist. That tension, when resolved publicly, is a story.</li>
+            <li><span class="accent">International traction early</span> — "A.I." performing overseas. Sync licensing and international markets are natural targets.</li>
+          </ul>
+          <ul class="bb-slist">
+            <li><span class="accent">Differentiated lane</span> — Documenting survival rather than glorifying the life. A distinction for a generation increasingly tired of the performance.</li>
+            <li><span class="accent">Duality as brand pillar</span> — Mixed race, dual city, upbeat-pain sound, engineer-artist identity. Duality is structural. It's in everything.</li>
+            <li><span class="accent">The silence as power</span> — What SGauge doesn't say about the hardest year is more compelling than what most artists do say.</li>
+            <li><span class="accent">RAPDAD as platform multiplier</span> — Interview access + artist development = relationships + distribution channel.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="bb-footer">
+        <div>
+          <div class="bb-footer-logo">S<span>GAUGE</span></div>
+          <div style="font-size:10px;letter-spacing:3px;color:#8a9bb0;text-transform:uppercase;margin-top:6px;">Shawn Gladue · Denver, CO · Est. 2010</div>
+        </div>
+        <div class="bb-footer-meta">RAPDAD55 · SHADY O'RAQ · IICYBABII<br>"Maktub. It was written."<br>BRAND BIBLE v1.0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════ INSIDER CIRCLE (kept) ═══════════ -->
+  <div class="panel" id="panel-insider">
+    <div class="card" style="border-left:3px solid var(--ws-net);">
+      <div class="ch"><h2>Insider Circle — Campaign Overview</h2><span class="tag tag-net">5Gauge</span></div>
+      <div class="ic-goals-grid">
+        <div class="ic-goal-card"><div class="ic-goal-num">$1,500</div><div class="ic-goal-lbl">Target from campaign</div></div>
+        <div class="ic-goal-card"><div class="ic-goal-num">75</div><div class="ic-goal-lbl">Supporters needed</div></div>
+        <div class="ic-goal-card"><div class="ic-goal-num">3 tiers</div><div class="ic-goal-lbl">Entry points</div></div>
+        <div class="ic-goal-card"><div class="ic-goal-num">4 weeks</div><div class="ic-goal-lbl">Campaign window</div></div>
+      </div>
+      <div class="ic-raised-input">
+        <label>$ Raised so far</label>
+        <input type="number" data-key="ic_raised" placeholder="0" min="0" oninput="updateIcBar(this.value)" style="width:120px;" />
+      </div>
+      <div class="ic-pbar-wrap"><div class="ic-pbar" id="icbar"></div></div>
+      <div class="ic-plabels"><span id="ic-raised-lbl">$0 raised</span><span>Goal: $1,500</span></div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><h2>Support tiers</h2><span class="tag tag-net">Pricing</span></div>
+      <div class="ic-tiers">
+        <div class="ic-tier">
+          <span class="ic-badge">Listener</span>
+          <div class="ic-price">$10</div>
+          <div class="ic-tier-name">Day-one supporter</div>
+          <ul class="ic-perks">
+            <li>Digital album early access</li>
+            <li>Name in liner notes</li>
+            <li>Private update thread</li>
+          </ul>
+        </div>
+        <div class="ic-tier featured">
+          <span class="ic-badge">Inner Circle</span>
+          <div class="ic-price">$25</div>
+          <div class="ic-tier-name">Most popular</div>
+          <ul class="ic-perks">
+            <li>Everything in Listener</li>
+            <li>Exclusive unreleased track</li>
+            <li>Behind-the-scenes content</li>
+            <li>Voice memo from the studio</li>
+          </ul>
+        </div>
+        <div class="ic-tier">
+          <span class="ic-badge">Co-Signer</span>
+          <div class="ic-price">$50</div>
+          <div class="ic-tier-name">Deep supporter</div>
+          <ul class="ic-perks">
+            <li>Everything in Inner Circle</li>
+            <li>1:1 listening session</li>
+            <li>Shoutout on release day</li>
+            <li>First look at merch</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><h2>4-week rollout</h2><span class="tag tag-net">Timeline</span></div>
+      <div class="ic-timeline">
+        <div class="ic-tl-row"><div class="ic-spine"><div class="ic-dot"></div><div class="ic-line"></div></div><div class="ic-tl-content"><p class="ic-tl-week">Week 1</p><p class="ic-tl-task">Soft launch to inner circle</p><p class="ic-tl-sub">DM your 50 most engaged followers first. No public post yet — exclusivity is the hook.</p></div></div>
+        <div class="ic-tl-row"><div class="ic-spine"><div class="ic-dot"></div><div class="ic-line"></div></div><div class="ic-tl-content"><p class="ic-tl-week">Week 2</p><p class="ic-tl-task">Public announcement + first piece of content</p><p class="ic-tl-sub">Drop a 60-second snippet or studio clip. Link to your payment page (Bandcamp, Gumroad, or direct).</p></div></div>
+        <div class="ic-tl-row"><div class="ic-spine"><div class="ic-dot"></div><div class="ic-line"></div></div><div class="ic-tl-content"><p class="ic-tl-week">Week 3</p><p class="ic-tl-task">Mid-campaign push + social proof</p><p class="ic-tl-sub">Post a supporter count update. Tag early backers (with permission). Drop the unreleased track for Inner Circle tier.</p></div></div>
+        <div class="ic-tl-row"><div class="ic-spine"><div class="ic-dot"></div></div><div class="ic-tl-content"><p class="ic-tl-week">Week 4</p><p class="ic-tl-task">Final push + close</p><p class="ic-tl-sub">Urgency post — closing the circle. Announce the album release date. Lock in the co-signer 1:1 sessions.</p></div></div>
+      </div>
+    </div>
+
+    <!-- Album budget tracker (kept) -->
+    <div class="card" style="border-left:3px solid var(--ws-net);">
+      <div class="abt-header">
+        <div>
+          <div class="ch" style="margin-bottom:4px;"><h2>Album budget tracker</h2><span class="tag tag-net">Pre-Merch · Pre-Rollout</span></div>
+        </div>
+        <div class="abt-total-wrap">
+          <div class="abt-total-num" id="abt-grand-total">$3,580</div>
+          <div class="abt-total-lbl">Total estimated budget</div>
+        </div>
+      </div>
+
+      <div class="abt-funding">
+        <div class="abt-fund-card trade"><div class="abt-fund-amt">~$1,250</div><div class="abt-fund-lbl">Cover via trades</div></div>
+        <div class="abt-fund-card campaign"><div class="abt-fund-amt">~$1,500</div><div class="abt-fund-lbl">Cover via campaign</div></div>
+        <div class="abt-fund-card sprint"><div class="abt-fund-amt">~$830</div><div class="abt-fund-lbl">Cover via cash sprints</div></div>
+      </div>
+
+      <div class="abt-section-lbl">Video + Production costs</div>
+      <table class="abt-table">
+        <thead><tr><th style="width:34%">Line item</th><th style="width:36%">Notes</th><th class="right" style="width:14%">Cost</th><th style="width:16%">Source</th></tr></thead>
+        <tbody>
+          <tr><td><span class="abt-item-name">Clothing budget</span><span class="abt-item-sub">9 videos × $100</span></td><td><span class="abt-item-note">Solo, Cheatcode, WayneBrady, Funeral, Bidness, Paid My Dues, Run It Up, What We On?, Work</span></td><td class="abt-cost">$<input type="number" class="abt-editable" data-key="abt_clothing" value="900" min="0" oninput="abtRecalc()"></td><td><span class="abt-src-badge sprint">Cash Sprint</span></td></tr>
+          <tr><td><span class="abt-item-name">Videographers</span><span class="abt-item-sub">3 videos @ $200–250</span></td><td><span class="abt-item-note">Funeral, Cheatcode, WayneBrady</span></td><td class="abt-cost">$<input type="number" class="abt-editable" data-key="abt_video" value="650" min="0" oninput="abtRecalc()"></td><td><span class="abt-src-badge trade">Trade</span></td></tr>
+          <tr><td><span class="abt-item-name">Exotic dancer</span><span class="abt-item-sub">Work video</span></td><td><span class="abt-item-note">Contractor rate, pay on delivery</span></td><td class="abt-cost">$<input type="number" class="abt-editable" data-key="abt_dancer" value="300" min="0" oninput="abtRecalc()"></td><td><span class="abt-src-badge sprint">Cash Sprint</span></td></tr>
+          <tr><td><span class="abt-item-name">Paid My Dues feature</span><span class="abt-item-sub">1 verse</span></td><td><span class="abt-item-note">Confirmed $150</span></td><td class="abt-cost">$<input type="number" class="abt-editable" data-key="abt_feature" value="150" min="0" oninput="abtRecalc()"></td><td><span class="abt-src-badge sprint">Cash Sprint</span></td></tr>
+          <tr><td><span class="abt-item-name">Cover design</span><span class="abt-item-sub">4 songs needing payment</span></td><td><span class="abt-item-note">WayneBrady, Run It Up, What We On?, Work</span></td><td class="abt-cost">$<input type="number" class="abt-editable" data-key="abt_cover" value="250" min="0" oninput="abtRecalc()"></td><td><span class="abt-src-badge trade">Trade</span></td></tr>
+          <tr><td><span class="abt-item-name">In-house production</span><span class="abt-item-sub">Mix, edit, EPK, deliverables</span></td><td><span class="abt-item-note">Self-handled — no cost</span></td><td class="abt-cost zero">$0</td><td><span class="abt-src-badge inhouse">In-house</span></td></tr>
+        </tbody>
+      </table>
+      <div class="abt-subtotal"><span>Production subtotal</span><span id="abt-prod-total">$2,250</span></div>
+
+      <div class="abt-section-lbl">Release party costs</div>
+      <div class="abt-party-grid">
+        <div class="abt-party-item"><div class="abt-party-amt">$<input type="number" class="abt-editable" data-key="abt_studio" value="500" min="0" oninput="abtRecalc()" style="width:60px;font-size:18px;"></div><div class="abt-party-lbl">Studio rental (4hr + engineer)</div></div>
+        <div class="abt-party-item"><div class="abt-party-amt">$<input type="number" class="abt-editable" data-key="abt_food" value="225" min="0" oninput="abtRecalc()" style="width:60px;font-size:18px;"></div><div class="abt-party-lbl">Food + drinks (35 people)</div></div>
+        <div class="abt-party-item"><div class="abt-party-amt">$<input type="number" class="abt-editable" data-key="abt_sticker" value="90" min="0" oninput="abtRecalc()" style="width:60px;font-size:18px;"></div><div class="abt-party-lbl">Sticker pack + download card × 35</div></div>
+        <div class="abt-party-item"><div class="abt-party-amt">$<input type="number" class="abt-editable" data-key="abt_flyers" value="40" min="0" oninput="abtRecalc()" style="width:60px;font-size:18px;"></div><div class="abt-party-lbl">Printed flyers (&gt;100 qty)</div></div>
+      </div>
+      <div class="abt-subtotal"><span>Release party subtotal</span><span id="abt-party-total">$855</span></div>
+
+      <div class="abt-legend">
+        <span class="abt-src-badge trade">Trade</span> Cover with your skills
+        <span class="abt-src-badge campaign">Campaign</span> Insider Circle fund
+        <span class="abt-src-badge sprint">Cash Sprint</span> Paid gigs earmarked for album
+        <span class="abt-src-badge inhouse">In-house</span> Self-handled, no cost
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ch"><h2>Campaign notes</h2></div>
+      <textarea data-key="ic_notes" style="min-height:100px;" placeholder="Supporter names, platform choice, payment link, milestones..."></textarea>
+    </div>
+  </div>
+
+  <!-- ═══════════ WEEKLY FOCUS (kept) ═══════════ -->
+  <div class="panel" id="panel-weekly">
+    <div class="card lc-rec">
+      <div class="ch"><h2>Weekly intention</h2><span class="tag tag-rec">Human</span></div>
+      <textarea data-key="wk_intention" style="min-height:72px;" placeholder="What does winning this week look like? What's the one non-negotiable?"></textarea>
+    </div>
+    <div class="sdiv">Daily focus blocks</div>
+    <div id="wkdays"></div>
+    <div class="card">
+      <div class="ch"><h2>End of week review</h2></div>
+      <div class="g2">
+        <div class="fg"><div class="fl">What worked</div><textarea data-key="wk_wins" placeholder="Wins, momentum, breakthroughs..."></textarea></div>
+        <div class="fg"><div class="fl">What to fix</div><textarea data-key="wk_fix" placeholder="Blockers, friction, adjustments..."></textarea></div>
+      </div>
+      <div class="fg"><div class="fl">Next week setup</div><textarea data-key="wk_next" placeholder="Prep tasks, carry-overs, goals for next week..."></textarea></div>
+    </div>
+  </div>
+
+  <!-- ═══════════ BUDGET (kept) ═══════════ -->
+  <div class="panel" id="panel-budget">
+    <div class="g3">
+      <div class="card">
+        <div class="ch"><h2>Housing &amp; utilities</h2></div>
+        <ul class="bl">
+          <li class="br"><span class="bc">Rent</span><span class="ba"><input type="text" data-key="b_rent" value="$1,600"/></span></li>
+          <li class="br"><span class="bc">Save for apt</span><span class="ba"><input type="text" data-key="b_save_apt" value="$300"/></span></li>
+          <li class="br"><span class="bc">Electric/Gas</span><span class="ba"><input type="text" data-key="b_electric" value="$100"/></span></li>
+          <li class="br"><span class="bc">Cell/Phones</span><span class="ba"><input type="text" data-key="b_cell" value="$100"/></span></li>
+          <li class="br"><span class="bc">Streaming</span><span class="ba"><input type="text" data-key="b_streaming" value="$60"/></span></li>
+          <li class="br"><span class="bc">Hygiene</span><span class="ba"><input type="text" data-key="b_hygiene" value="$100"/></span></li>
+        </ul>
+        <div class="btot"><span>Total</span><span>$2,260</span></div>
+      </div>
+      <div class="card">
+        <div class="ch"><h2>Food &amp; transport</h2></div>
+        <ul class="bl">
+          <li class="br"><span class="bc">Groceries</span><span class="ba"><input type="text" data-key="b_groceries" value="$800"/></span></li>
+          <li class="br"><span class="bc">Starbucks</span><span class="ba"><input type="text" data-key="b_starbucks" value="$100"/></span></li>
+          <li class="br"><span class="bc">Takeout</span><span class="ba"><input type="text" data-key="b_takeout" value="$400"/></span></li>
+          <li class="br"><span class="bc">Restaurants</span><span class="ba"><input type="text" data-key="b_restaurants" value="$400"/></span></li>
+          <li class="br"><span class="bc">Carts</span><span class="ba"><input type="text" data-key="b_carts" value="$100"/></span></li>
+          <li class="br"><span class="bc">Car payment</span><span class="ba"><input type="text" data-key="b_car" value="$600"/></span></li>
+          <li class="br"><span class="bc">Gas</span><span class="ba"><input type="text" data-key="b_gas" value="$200"/></span></li>
+          <li class="br"><span class="bc">Registration</span><span class="ba"><input type="text" data-key="b_reg" value="$100"/></span></li>
+        </ul>
+        <div class="btot"><span>Total</span><span>$2,700</span></div>
+      </div>
+      <div class="card">
+        <div class="ch"><h2>Wellness &amp; family</h2></div>
+        <ul class="bl">
+          <li class="br"><span class="bc">Gym</span><span class="ba"><input type="text" data-key="b_gym" value="$35"/></span></li>
+          <li class="br"><span class="bc">Massage</span><span class="ba"><input type="text" data-key="b_massage" value="$150"/></span></li>
+          <li class="br"><span class="bc">Facials</span><span class="ba"><input type="text" data-key="b_facials" value="$320"/></span></li>
+          <li class="br"><span class="bc">Hair care</span><span class="ba"><input type="text" data-key="b_hair" value="$100"/></span></li>
+          <li class="br"><span class="bc">Tattoos</span><span class="ba"><input type="text" data-key="b_tattoos" value="$100"/></span></li>
+          <li class="br"><span class="bc">Medical</span><span class="ba"><input type="text" data-key="b_medical" value="$100"/></span></li>
+          <li class="br"><span class="bc">Nellie daily</span><span class="ba"><input type="text" data-key="b_nellie" value="$500"/></span></li>
+          <li class="br"><span class="bc">Child support</span><span class="ba"><input type="text" data-key="b_cs" value="$400"/></span></li>
+        </ul>
+        <div class="btot"><span>Total</span><span>$1,705</span></div>
+      </div>
+    </div>
+
+    <div class="g3">
+      <div class="card">
+        <div class="ch"><h2>Debt</h2></div>
+        <ul class="bl">
+          <li class="br"><span class="bc">CS arrears</span><span class="ba"><input type="text" data-key="bd_csa" placeholder="$—"/></span></li>
+          <li class="br"><span class="bc">Aspen Bank</span><span class="ba"><input type="text" data-key="bd_aspen" placeholder="$—"/></span></li>
+          <li class="br"><span class="bc">Climb Credit</span><span class="ba"><input type="text" data-key="bd_climb" placeholder="$—"/></span></li>
+          <li class="br"><span class="bc">Better Cars</span><span class="ba"><input type="text" data-key="bd_cars" placeholder="$—"/></span></li>
+          <li class="br"><span class="bc">Huntington</span><span class="ba"><input type="text" data-key="bd_hunt" placeholder="$—"/></span></li>
+          <li class="br"><span class="bc">Wells Fargo</span><span class="ba"><input type="text" data-key="bd_wells" placeholder="$—"/></span></li>
+          <li class="br"><span class="bc">Harmony</span><span class="ba"><input type="text" data-key="bd_harmony" placeholder="$—"/></span></li>
+          <li class="br"><span class="bc">New Age</span><span class="ba"><input type="text" data-key="bd_newage" placeholder="$—"/></span></li>
+        </ul>
+        <div class="fg" style="margin-top:10px;"><div class="fl">Payment notes</div><textarea data-key="bd_notes" placeholder="Amounts, due dates..."></textarea></div>
+      </div>
+      <div class="card">
+        <div class="ch"><h2>Music &amp; biz costs</h2><span class="tag tag-net">Artistry</span></div>
+        <ul class="bl">
+          <li class="br"><span class="bc">Beats/samples</span><span class="ba"><input type="text" data-key="bm_beats" placeholder="$—"/></span></li>
+          <li class="br"><span class="bc">Studio time</span><span class="ba"><input type="text" data-key="bm_studio" placeholder="$—"/></span></li>
+          <li class="br"><span class="bc">Mixing/mastering</span><span class="ba"><input type="text" data-key="bm_mixing" placeholder="$—"/></span></li>
+          <li class="br"><span class="bc">Cover art</span><span class="ba"><input type="text" data-key="bm_cover" placeholder="$—"/></span></li>
+          <li class="br"><span class="bc">Videos</span><span class="ba"><input type="text" data-key="bm_videos" placeholder="$—"/></span></li>
+          <li class="br"><span class="bc">Equipment</span><span class="ba"><input type="text" data-key="bm_equip" placeholder="$—"/></span></li>
+        </ul>
+        <div class="fg" style="margin-top:10px;"><div class="fl">This month's music spend</div><input type="text" data-key="bm_total" placeholder="$0"/></div>
+      </div>
+      <div class="card">
+        <div class="ch"><h2>Mgmt &amp; taxes</h2><span class="tag tag-book">Business</span></div>
+        <ul class="bl">
+          <li class="br"><span class="bc">LLC (annual)</span><span class="ba"><input type="text" data-key="bt_llc" placeholder="$—"/></span></li>
+          <li class="br"><span class="bc">Accountant</span><span class="ba"><input type="text" data-key="bt_accountant" value="$150"/></span></li>
+          <li class="br"><span class="bc">Distribution</span><span class="ba"><input type="text" data-key="bt_distro" placeholder="$—"/></span></li>
+          <li class="br"><span class="bc">Hosting/tools</span><span class="ba"><input type="text" data-key="bt_hosting" placeholder="$—"/></span></li>
+          <li class="br"><span class="bc">Savings — Nellie</span><span class="ba"><input type="text" data-key="bt_snellie" value="$100"/></span></li>
+          <li class="br"><span class="bc">Savings — Simone</span><span class="ba"><input type="text" data-key="bt_ssimone" value="$100"/></span></li>
+        </ul>
+        <div class="fg" style="margin-top:10px;"><div class="fl">Tax/LLC notes</div><textarea data-key="bt_notes" placeholder="LLC status, filing deadlines..."></textarea></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><h2>Monthly income snapshot</h2><span class="tag tag-roll">Net</span></div>
+      <div class="g2">
+        <div>
+          <div class="ir"><span class="irlb">Day job (monthly net)</span><div class="irv"><span>$</span><input type="number" data-key="bi_job" placeholder="0"/></div></div>
+          <div class="ir"><span class="irlb">Side work</span><div class="irv"><span>$</span><input type="number" data-key="bi_side" placeholder="0"/></div></div>
+          <div class="ir"><span class="irlb">RAPCLASS / music</span><div class="irv"><span>$</span><input type="number" data-key="bi_rc" placeholder="0"/></div></div>
+          <div class="ir"><span class="irlb">RAPDAD Radio</span><div class="irv"><span>$</span><input type="number" data-key="bi_radio" placeholder="0"/></div></div>
+        </div>
+        <div>
+          <div class="metric" style="margin-bottom:10px;"><div class="ml">Fixed expenses est.</div><div class="mv">~$6,665+</div><div class="ms">housing + food + transport + wellness + family</div></div>
+          <div class="fl">Notes</div>
+          <textarea data-key="bi_notes" placeholder="Adjustments, windfalls, unexpected costs..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /content -->
+</main>
+</div>
+
+<!-- Export modal -->
+<div class="modal-bg" id="exportModal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-head"><h3>This week — text export</h3><button onclick="copyExport()">Copy</button><button onclick="closeModal()">Close</button></div>
+    <textarea id="exportText" readonly></textarea>
+  </div>
+</div>
+
+<script>
+/* ── DATA: workstreams + events + openers + decisions ── */
+const WS = {
+  roxy:  { label: 'Roxy Show',         color: '#FF6B35', short: 'Roxy' },
+  promo: { label: 'Roxy Promo',        color: '#E63946', short: 'Promo' },
+  prod:  { label: 'Album Production',  color: '#2A9D8F', short: 'Prod' },
+  roll:  { label: 'Album Rollout',     color: '#06A77D', short: 'Rollout' },
+  debt:  { label: 'Content Debt',      color: '#F4A261', short: 'Content' },
+  net:   { label: 'Networking',        color: '#9B5DE5', short: 'Network' },
+  book:  { label: 'Tour Booking',      color: '#3A86FF', short: 'Booking' },
+  tour:  { label: 'Tour Dates',        color: '#FF006E', short: 'Tour' },
+  job:   { label: 'Day Job',           color: '#6C757D', short: 'Starbucks' },
+  fam:   { label: 'Family',            color: '#FF8FB1', short: 'Family' },
+  rec:   { label: 'Recurring Content', color: '#FFD60A', short: 'Hanging Mic' },
+};
+const WS_ORDER = ['roxy','promo','prod','roll','debt','net','book','tour','rec','job','fam'];
+
+const EVENTS = [
+  // MAY 17 Sun
+  { d: '2026-05-17', ws: 'job',  t: 'Starbucks 12:30–5pm' },
+  { d: '2026-05-17', ws: 'debt', t: 'Edit Carrie & Loralee interviews', n: 'Anthony pending' },
+  // MAY 18 Mon
+  { d: '2026-05-18', ws: 'debt', t: 'Edit Dime Dee & Dank interviews' },
+  // MAY 19 Tue
+  { d: '2026-05-19', ws: 'promo', t: 'Send official opener agreements', n: 'Written, with tier structure', critical: true },
+  // MAY 20 Wed
+  { d: '2026-05-20', ws: 'job',  t: 'Starbucks 8am–noon' },
+  { d: '2026-05-20', ws: 'rec',  t: 'Hanging Mic shoot' },
+  { d: '2026-05-20', ws: 'roll', t: 'IGNORANCE MIXTAPE RELEASE', critical: true },
+  // MAY 21 Thu
+  { d: '2026-05-21', ws: 'job',  t: 'Starbucks 8–12:30pm' },
+  { d: '2026-05-21', ws: 'book', t: 'Call Hypnotic — tour venues (SD/LA, Vegas/AZ)', critical: true },
+  // MAY 22 Fri
+  { d: '2026-05-22', ws: 'job',  t: 'Starbucks 8:30am–4pm' },
+  { d: '2026-05-22', ws: 'prod', t: 'Mix album + finish logo' },
+  // MAY 23 Sat
+  { d: '2026-05-23', ws: 'fam',  t: 'Fuck ICE 10am' },
+  { d: '2026-05-23', ws: 'net',  t: 'Austin Toker — Colorado Springs', cost: '$' },
+  // MAY 24 Sun
+  { d: '2026-05-24', ws: 'job',  t: 'Starbucks 9–1:30pm' },
+  { d: '2026-05-24', ws: 'fam',  t: 'Family block' },
+  // MAY 25 Mon
+  { d: '2026-05-25', ws: 'job',  t: 'Starbucks 10–4pm' },
+  { d: '2026-05-25', ws: 'book', t: 'Venue outreach — Vegas / SD / AZ / LA' },
+  { d: '2026-05-25', ws: 'promo', t: 'Confirm openers + flyers', cost: '$50' },
+  // MAY 26 Tue
+  { d: '2026-05-26', ws: 'job',  t: 'Starbucks 11–5pm' },
+  { d: '2026-05-26', ws: 'rec',  t: 'Hanging Mic shoot' },
+  // MAY 27 Wed
+  { d: '2026-05-27', ws: 'prod', t: 'Finish logo' },
+  { d: '2026-05-27', ws: 'prod', t: 'Prep early-access album build' },
+  { d: '2026-05-27', ws: 'prod', t: 'Distro album via DistroKid', cost: '$40', critical: true },
+  // MAY 28 Thu
+  { d: '2026-05-28', ws: 'job',  t: 'Starbucks 11:15–4pm' },
+  { d: '2026-05-28', ws: 'rec',  t: 'Hanging Mic shoot' },
+  { d: '2026-05-28', ws: 'net',  t: 'Kayeno & Ddubb — Black Buzzard', cost: '$' },
+  // MAY 29 Fri
+  { d: '2026-05-29', ws: 'job',  t: 'Starbucks 11:30–5pm' },
+  { d: '2026-05-29', ws: 'promo', t: 'Lock listening party venue', cost: '$ studio', critical: true },
+  { d: '2026-05-29', ws: 'net',  t: 'Mosi show — Denver', cost: '$' },
+  // MAY 30 Sat
+  { d: '2026-05-30', ws: 'rec',  t: 'Hanging Mic shoot' },
+  { d: '2026-05-30', ws: 'rec',  t: 'SGauge photoshoot', cost: '$ studio', critical: true },
+  // MAY 31 Sun
+  { d: '2026-05-31', ws: 'job',  t: 'Starbucks 10–5:30pm' },
+  { d: '2026-05-31', ws: 'debt', t: 'Edit 2eazy interview' },
+
+  // JUNE
+  { d: '2026-06-01', ws: 'promo', t: 'Show flyers + album posters', cost: '$ printing', critical: true },
+  { d: '2026-06-02', ws: 'debt', t: 'Edit documentary' },
+  { d: '2026-06-03', ws: 'debt', t: 'Edit documentary' },
+  { d: '2026-06-04', ws: 'rec',  t: 'Hanging Mic shoot' },
+  { d: '2026-06-05', ws: 'promo', t: 'Organize + promote listening party', cost: '$' },
+  { d: '2026-06-05', ws: 'promo', t: 'Order MoneyBagJayzo pendant', cost: '$ jeweler' },
+  { d: '2026-06-06', ws: 'rec',  t: 'Hanging Mic shoot' },
+  { d: '2026-06-06', ws: 'fam',  t: 'Family' },
+  { d: '2026-06-07', ws: 'fam',  t: 'Family' },
+  { d: '2026-06-09', ws: 'debt', t: 'Edit documentary' },
+  { d: '2026-06-10', ws: 'debt', t: 'Edit documentary' },
+  { d: '2026-06-11', ws: 'rec',  t: 'Hanging Mic shoot' },
+  { d: '2026-06-12', ws: 'promo', t: 'Order merch', cost: '$ printing' },
+  { d: '2026-06-15', ws: 'promo', t: 'Opener checkpoint #1 — promo & sales check', critical: true },
+  { d: '2026-06-16', ws: 'debt', t: 'Edit documentary' },
+  { d: '2026-06-17', ws: 'debt', t: 'Edit documentary + transfer to USBs', cost: '$ drives', critical: true },
+  { d: '2026-06-18', ws: 'promo', t: 'Pickup merch + sign' },
+  { d: '2026-06-18', ws: 'net',  t: 'Ray Reed & Myrically — Icebox show', cost: '$' },
+  { d: '2026-06-19', ws: 'promo', t: 'LISTENING PARTY + documentary screening', cost: '$ gas/food/drinks', critical: true },
+  { d: '2026-06-20', ws: 'fam',  t: 'Family' },
+  { d: '2026-06-21', ws: 'fam',  t: 'Family' },
+  { d: '2026-06-23', ws: 'rec',  t: 'Hanging Mic shoot' },
+  { d: '2026-06-27', ws: 'rec',  t: 'Hanging Mic shoot' },
+  { d: '2026-06-27', ws: 'net',  t: 'Jayzo Free Grill event', cost: '$' },
+  { d: '2026-06-29', ws: 'rec',  t: 'Hanging Mic shoot' },
+
+  // JULY
+  { d: '2026-07-01', ws: 'promo', t: 'Opener checkpoint #2 — final count', critical: true },
+  { d: '2026-07-02', ws: 'roxy', t: 'Setlist + rehearse' },
+  { d: '2026-07-03', ws: 'roxy', t: 'Rest + rehearse' },
+  { d: '2026-07-04', ws: 'roxy', t: 'ROXY SHOW + SAME OLD GAUGE DROP', cost: '$ gas/security/DJ', critical: true },
+  { d: '2026-07-05', ws: 'roll', t: 'Begin album rollout' },
+  { d: '2026-07-05', ws: 'fam',  t: 'Family' },
+  { d: '2026-07-06', ws: 'roll', t: 'Album rollout content' },
+  { d: '2026-07-07', ws: 'roll', t: 'Album rollout content' },
+  { d: '2026-07-08', ws: 'roll', t: 'Album rollout content' },
+  { d: '2026-07-09', ws: 'tour', t: 'BAY AREA SHOW — Jerome / Erupt boom-bap night', critical: true },
+  { d: '2026-07-10', ws: 'tour', t: 'LA / SAN DIEGO SHOW — whichever booked first', critical: true },
+  { d: '2026-07-11', ws: 'tour', t: 'VEGAS / AZ SHOW — whichever booked first', critical: true },
+  { d: '2026-07-18', ws: 'fam',  t: 'Family' },
+  { d: '2026-07-19', ws: 'fam',  t: 'Family' },
+  { d: '2026-07-25', ws: 'fam',  t: 'Family' },
+  { d: '2026-07-29', ws: 'rec',  t: 'Hanging Mic shoot' },
+  { d: '2026-07-30', ws: 'tour', t: 'HQ SHOW — DeMond / KO / Ddubb · Denver tour closer', critical: true },
+];
+
+const DECISIONS = [
+  { id: 'd_hyp',    title: 'Hypnotic call — get venue/promoter leads for SD/LA + Vegas/AZ', deadline: 'May 21', body: 'Block 30 min. Verbal yes/no on lanes is enough to know what to outreach.' },
+  { id: 'd_tour',   title: 'Tour venue confirmation deadline', deadline: 'June 15', body: 'If unbooked by 6/15, drop "mini-tour" framing. Rebuild as two-show: Bay 7/9 + Denver close 7/30.' },
+  { id: 'd_jul25',  title: 'July 25 Rhody / DeMond show — cut or pending booking?', deadline: 'TBD', body: 'Not on calendar. Confirm one way or the other so the post-Roxy block is honest.' },
+  { id: 'd_mix',    title: 'Final album mix completion — songs 3 & 4 hard date', deadline: 'June 20', body: 'Not blocked on calendar. If no date by 6/20 it slips into rehearsal week.' },
+];
+
+const OPENERS = ['1','2','3','4','5','6','7','8'];
+
+const PAGES = {
+  dashboard:   { t:'Command',       s:'Roxy headline · July 4 · Same Old Gauge drop' },
+  calendar:    { t:'Calendar',      s:'May / June / July 2026 — locked items' },
+  openers:     { t:'Openers',       s:'8 slots · sales tracker · tier system' },
+  tour:        { t:'Tour',          s:'Bay · LA/SD · Vegas/AZ · HQ closer' },
+  workstreams: { t:'Workstreams',   s:'Status read on each lane' },
+  decisions:   { t:'Decisions',     s:'Locks & risks · open questions' },
+  brand:       { t:'Brand Bible',   s:'SGauge identity & visual direction' },
+  insider:     { t:'Insider Circle',s:'Founding supporter campaign · album budget' },
+  weekly:      { t:'Weekly Focus',  s:'Intention · daily blocks · review' },
+  budget:      { t:'Budget',        s:'Income · expenses · debt' },
+};
+
+/* ── Persistence ── */
+const SK = 'gauge_cc_v1';
+const loadAll = () => { try { return JSON.parse(localStorage.getItem(SK)) || {}; } catch { return {}; } };
+const saveAll = s => { try { localStorage.setItem(SK, JSON.stringify(s)); } catch (e) {} };
+let flashT;
+function flash() {
+  const el = document.getElementById('saveFlash');
+  if (!el) return;
+  el.classList.add('on'); clearTimeout(flashT);
+  flashT = setTimeout(() => el.classList.remove('on'), 1600);
+}
+function persistEl(el) {
+  const k = el.dataset.key; if (!k) return;
+  const s = loadAll();
+  s[k] = (el.type === 'checkbox') ? el.checked : el.value;
+  saveAll(s); flash();
+  if (k === 'totalSold' || k === 'personalSold') recalcTickets();
+}
+
+/* ── Nav ── */
+function go(id, silent) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('active'));
+  const panel = document.getElementById('panel-' + id);
+  if (panel) panel.classList.add('active');
+  document.querySelectorAll('.nb').forEach(b => {
+    if (b.getAttribute('onclick') === "go('" + id + "')") b.classList.add('active');
+  });
+  const pg = PAGES[id] || {};
+  document.getElementById('ptitle').textContent = pg.t || id;
+  document.getElementById('psub').textContent = pg.s || '';
+  if (!silent) { const s = loadAll(); s.__page = id; saveAll(s); }
+  if (window.innerWidth <= 800) closeSB();
+  window.scrollTo({ top: 0 });
+}
+
+/* ── Sidebar ── */
+function toggleSB() {
+  const sb = document.getElementById('sidebar');
+  const bd = document.getElementById('sbBackdrop');
+  const open = sb.classList.toggle('open');
+  bd.classList.toggle('on', open);
+}
+function closeSB() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sbBackdrop').classList.remove('on');
+}
+
+/* ── Date helpers ── */
+function parseISO(s) { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); }
+function fmtShort(d) { return d.toLocaleDateString('en-US', { month:'short', day:'numeric' }); }
+function fmtDay(d) { return d.toLocaleDateString('en-US', { weekday:'short' }); }
+function startOfDay(d) { const x = new Date(d); x.setHours(0,0,0,0); return x; }
+function getMon(d) { const dt = startOfDay(d); const day = dt.getDay(); const diff = day === 0 ? -6 : 1 - day; dt.setDate(dt.getDate() + diff); return dt; }
+function daysBetween(a, b) { return Math.ceil((startOfDay(b) - startOfDay(a)) / (1000*60*60*24)); }
+const TODAY = new Date();
+
+/* ── Countdowns ── */
+function renderCountdowns() {
+  const today = startOfDay(TODAY);
+  document.getElementById('roxyDays').textContent = Math.max(0, daysBetween(today, parseISO('2026-07-04')));
+  document.getElementById('ignDays').textContent  = Math.max(0, daysBetween(today, parseISO('2026-05-20')));
+  document.getElementById('albDays').textContent  = Math.max(0, daysBetween(today, parseISO('2026-07-04')));
+  document.getElementById('distDays').textContent = Math.max(0, daysBetween(today, parseISO('2026-05-27')));
+  document.getElementById('lpDays').textContent   = Math.max(0, daysBetween(today, parseISO('2026-06-19')));
+  document.getElementById('datedisp').innerHTML =
+    TODAY.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' }) +
+    '<br>' + TODAY.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+}
+
+/* ── Ticket / personal sales ── */
+function tickStatus(sold, target) {
+  const today = startOfDay(TODAY);
+  const dleft = Math.max(1, daysBetween(today, parseISO('2026-07-04')));
+  const totalWindow = daysBetween(parseISO('2026-05-01'), parseISO('2026-07-04'));
+  const elapsed = totalWindow - dleft;
+  const expected = Math.round((elapsed / totalWindow) * target);
+  if (sold === 0 && expected > 5) return 'BEHIND';
+  if (sold >= target) return 'DONE';
+  if (sold >= expected) return 'ON TRACK';
+  if (sold >= expected * 0.6) return 'AT RISK';
+  return 'BEHIND';
+}
+function statusClass(s) { return ({ BEHIND:'st-behind', 'AT RISK':'st-risk', 'ON TRACK':'st-on', DONE:'st-done', PENDING:'st-pending' })[s] || 'st-pending'; }
+function recalcTickets() {
+  const sold = parseInt(document.getElementById('totalSold').value) || 0;
+  const personal = parseInt(document.getElementById('personalSold').value) || 0;
+  document.getElementById('ticketSold').textContent = sold;
+  const pct = Math.min(100, (sold / 200) * 100);
+  const pctP = Math.min(100, (personal / 100) * 100);
+  document.getElementById('ticketBar').style.width = pct + '%';
+  document.getElementById('totalBar').style.width = pct + '%';
+  document.getElementById('personalBar').style.width = pctP + '%';
+  const st = sold === 0 ? 'PENDING' : tickStatus(sold, 200);
+  const stP = personal === 0 ? 'PENDING' : tickStatus(personal, 100);
+  const ts = document.getElementById('totalStatus'), ps = document.getElementById('personalStatus');
+  ts.textContent = st; ts.className = 'tr-status ' + statusClass(st);
+  ps.textContent = stP; ps.className = 'tr-status ' + statusClass(stP);
+}
+
+/* ── Week strip ── */
+function renderWeekStrip() {
+  const mon = getMon(TODAY);
+  const wstrip = document.getElementById('wstrip');
+  const todayStr = startOfDay(TODAY).toDateString();
+  let html = '';
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(mon); d.setDate(mon.getDate() + i);
+    const iso = d.toISOString().slice(0,10);
+    const evs = EVENTS.filter(e => e.d === iso);
+    const dots = evs.slice(0,5).map(e => `<span style="background:${WS[e.ws].color}"></span>`).join('');
+    const cls = 'wd' + (d.toDateString() === todayStr ? ' today' : '');
+    html += `<div class="${cls}"><div class="wdn">${fmtDay(d)}</div><div class="wdnum">${d.getDate()}</div><div class="wddots">${dots}</div></div>`;
+  }
+  wstrip.innerHTML = html;
+  const ws = mon.toLocaleDateString('en-US', { month:'short', day:'numeric' });
+  const we = new Date(mon); we.setDate(mon.getDate() + 6);
+  const wkLbl = `Week of ${ws} – ${we.toLocaleDateString('en-US', { month:'short', day:'numeric' })}`;
+  document.getElementById('wklabel').textContent = wkLbl;
+  const wr = document.getElementById('wkRange'); if (wr) wr.textContent = wkLbl;
+}
+
+/* ── This week list ── */
+function renderThisWeek() {
+  const mon = getMon(TODAY);
+  const list = document.getElementById('thisWeek');
+  const todayStr = startOfDay(TODAY).toDateString();
+  const rows = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(mon); d.setDate(mon.getDate() + i);
+    const iso = d.toISOString().slice(0,10);
+    const evs = EVENTS.filter(e => e.d === iso);
+    evs.forEach(e => {
+      rows.push({
+        day: fmtDay(d).toUpperCase() + ' ' + d.getDate(),
+        isToday: d.toDateString() === todayStr,
+        ev: e
+      });
+    });
+  }
+  if (rows.length === 0) {
+    list.innerHTML = '<li class="tw-item"><div></div><div></div><div class="tw-title" style="color:var(--muted);">No items locked this week.</div><div></div></li>';
+    return;
+  }
+  list.innerHTML = rows.map(r => `
+    <li class="tw-item${r.isToday ? ' is-today' : ''}${r.ev.critical ? ' is-critical' : ''}">
+      <div class="tw-day">${r.day}</div>
+      <div class="tw-dot" style="background:${WS[r.ev.ws].color}"></div>
+      <div class="tw-title">${escape(r.ev.t)}${r.ev.n ? `<span class="note">${escape(r.ev.n)}</span>` : ''}</div>
+      <div class="tw-cost">${r.ev.cost || ''}</div>
+    </li>
+  `).join('');
+}
+
+/* ── Calendar panel ── */
+let calFilter = 'all';
+function renderCalFilter() {
+  const bar = document.getElementById('calFilter');
+  bar.innerHTML = WS_ORDER.map(k => `
+    <button data-ws="${k}" class="${calFilter === k ? 'on' : ''}" onclick="setFilter('${k}')">
+      <span class="dot" style="background:${WS[k].color}"></span>${WS[k].label}
+    </button>`).join('');
+  document.getElementById('filterAllBtn').classList.toggle('on', calFilter === 'all');
+}
+function setFilter(f) { calFilter = f; renderCalendar(); renderCalFilter(); }
+function renderCalendar() {
+  const months = { '05': 'May 2026', '06': 'June 2026', '07': 'July 2026' };
+  const byMonth = {};
+  EVENTS.forEach(e => {
+    if (calFilter !== 'all' && e.ws !== calFilter) return;
+    const m = e.d.slice(5,7);
+    if (!byMonth[m]) byMonth[m] = {};
+    if (!byMonth[m][e.d]) byMonth[m][e.d] = [];
+    byMonth[m][e.d].push(e);
+  });
+  const todayStr = startOfDay(TODAY).toDateString();
+  let html = '';
+  for (const m of ['05','06','07']) {
+    if (!byMonth[m] || Object.keys(byMonth[m]).length === 0) continue;
+    html += `<div class="cal-month"><div class="cal-month-head">${months[m]}</div>`;
+    const days = Object.keys(byMonth[m]).sort();
+    for (const day of days) {
+      const dt = parseISO(day);
+      const isToday = dt.toDateString() === todayStr;
+      const cls = 'cal-day' + (isToday ? ' is-today' : '');
+      html += `<div class="${cls}">
+        <div class="cal-day-label"><span class="ddn">${dt.getDate()}</span>${fmtDay(dt).toUpperCase()}</div>
+        <div class="cal-events">`;
+      byMonth[m][day].forEach((e, i) => {
+        const evId = e.d.replace(/-/g,'') + '_' + i;
+        html += `<div class="cal-ev${e.critical ? ' is-critical' : ''}" data-ev="${evId}">
+          <div class="cal-ev-dot" style="background:${WS[e.ws].color}"></div>
+          <div>
+            <div class="cal-ev-title"><span class="ws-name" style="color:${WS[e.ws].color}">${WS[e.ws].short}</span>${escape(e.t)}${e.n ? `<span style="display:block;font-size:11px;color:var(--muted);margin-top:2px;">${escape(e.n)}</span>` : ''}</div>
+            <button class="cal-ev-note-btn" onclick="toggleNote('${evId}')">Note</button>
+            <textarea data-key="evn_${evId}" placeholder="Add a note for this date..."></textarea>
+          </div>
+          <div class="cal-ev-cost">${e.cost || ''}</div>
+        </div>`;
+      });
+      html += `</div></div>`;
+    }
+    html += `</div>`;
+  }
+  document.getElementById('calendar').innerHTML = html || '<div class="card"><p style="color:var(--muted);">No events match the current filter.</p></div>';
+  restoreFields();
+}
+function toggleNote(id) {
+  const el = document.querySelector(`.cal-ev[data-ev="${id}"]`);
+  if (el) el.classList.toggle('note-on');
+}
+
+/* ── Workstream cards ── */
+function ratio(ws) {
+  // approximate ratio of done events vs total for given ws (from locked calendar)
+  const evs = EVENTS.filter(e => e.ws === ws);
+  return { count: evs.length, label: evs.length + ' locked' };
+}
+function renderWorkstreams() {
+  const s = loadAll();
+  const main = WS_ORDER.filter(k => ['roxy','promo','prod','roll','debt','net','book','tour'].includes(k));
+  const grid = document.getElementById('wsGrid');
+  grid.innerHTML = main.map(k => {
+    const r = ratio(k);
+    const stKey = 'ws_' + k + '_status';
+    const sv = s[stKey] || 'PENDING';
+    return `
+      <div class="ws-card" data-ws="${k}">
+        <div class="ws-label" style="color:${WS[k].color}">${WS[k].label}</div>
+        <div class="ws-metric">${r.count}</div>
+        <div class="ws-sub">${r.label}</div>
+        <select class="ws-status-pick" data-key="${stKey}">
+          <option ${sv==='PENDING'?'selected':''}>PENDING</option>
+          <option ${sv==='ON TRACK'?'selected':''}>ON TRACK</option>
+          <option ${sv==='AT RISK'?'selected':''}>AT RISK</option>
+          <option ${sv==='BEHIND'?'selected':''}>BEHIND</option>
+          <option ${sv==='DONE'?'selected':''}>DONE</option>
+        </select>
+      </div>
+    `;
+  }).join('');
+
+  const detail = document.getElementById('wsDetail');
+  detail.innerHTML = WS_ORDER.map(k => {
+    const r = ratio(k);
+    const stKey = 'ws_' + k + '_status';
+    const noteKey = 'ws_' + k + '_notes';
+    const sv = s[stKey] || 'PENDING';
+    return `
+      <div class="card lc-${k}" style="margin-bottom:10px;">
+        <div class="ch">
+          <h2 style="color:${WS[k].color}">${WS[k].label}</h2>
+          <span class="tr-status ${statusClass(sv)}">${sv}</span>
+          <span class="tag" style="background:var(--s3);color:var(--soft);margin-left:auto;">${r.label}</span>
+        </div>
+        <div class="fg">
+          <div class="fl">Status</div>
+          <select data-key="${stKey}">
+            <option ${sv==='PENDING'?'selected':''}>PENDING</option>
+            <option ${sv==='ON TRACK'?'selected':''}>ON TRACK</option>
+            <option ${sv==='AT RISK'?'selected':''}>AT RISK</option>
+            <option ${sv==='BEHIND'?'selected':''}>BEHIND</option>
+            <option ${sv==='DONE'?'selected':''}>DONE</option>
+          </select>
+        </div>
+        <div class="fg">
+          <div class="fl">Notes</div>
+          <textarea data-key="${noteKey}" placeholder="Status notes for ${WS[k].label}..."></textarea>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* ── Openers ── */
+function tierOf(n) {
+  if (n === 0 || isNaN(n)) return { name: 'Cut',       cls: 'op-tier-cut',      set: 'None' };
+  if (n <= 9)              return { name: 'Short',     cls: 'op-tier-short',    set: '3 songs' };
+  if (n <= 19)             return { name: 'Standard',  cls: 'op-tier-standard', set: '15 min' };
+  if (n <= 24)             return { name: 'Elevated',  cls: 'op-tier-elevated', set: '20 min' };
+  return { name: 'Top', cls: 'op-tier-top', set: '25 min' };
+}
+function renderOpeners() {
+  const s = loadAll();
+  const body = document.getElementById('opBody');
+  body.innerHTML = OPENERS.map(i => {
+    const name = s['op_' + i + '_name'] || '';
+    const sold = parseInt(s['op_' + i + '_tickets']) || 0;
+    const t = tierOf(sold);
+    return `<tr>
+      <td style="color:var(--muted);">${i}</td>
+      <td><input class="op-name" type="text" data-key="op_${i}_name" placeholder="Opener ${i} name" value="${escape(name)}"></td>
+      <td class="right"><input type="number" class="op-tickets" min="0" data-key="op_${i}_tickets" value="${sold}" oninput="updateOpener(${i})"></td>
+      <td class="op-tier-cell"><span class="op-tier-pill ${t.cls}" id="opTier${i}">${t.name}</span></td>
+      <td class="right" style="color:var(--muted);font-size:12px;" id="opSet${i}">${t.set}</td>
+    </tr>`;
+  }).join('');
+  updateOpenerTotal();
+}
+function updateOpener(i) {
+  const el = document.querySelector(`[data-key="op_${i}_tickets"]`);
+  const n = parseInt(el.value) || 0;
+  const t = tierOf(n);
+  document.getElementById('opTier' + i).textContent = t.name;
+  document.getElementById('opTier' + i).className = 'op-tier-pill ' + t.cls;
+  document.getElementById('opSet' + i).textContent = t.set;
+  updateOpenerTotal();
+}
+function updateOpenerTotal() {
+  const s = loadAll();
+  const total = OPENERS.reduce((sum, i) => sum + (parseInt(s['op_' + i + '_tickets']) || 0), 0);
+  const el = document.getElementById('opTotal'); if (el) el.textContent = total;
+}
+
+/* ── Decisions ── */
+function renderDecisions() {
+  const s = loadAll();
+  const summary = DECISIONS.map(d => {
+    const done = !!s['dec_' + d.id + '_done'];
+    return `<li class="dec-item ${done ? 'resolved' : ''}">
+      <input type="checkbox" data-key="dec_${d.id}_done" ${done ? 'checked' : ''}>
+      <div class="dec-body">
+        <div class="dec-title">${escape(d.title)}</div>
+        <div class="dec-note">${escape(d.body)}</div>
+      </div>
+      <div class="dec-deadline">${escape(d.deadline)}</div>
+    </li>`;
+  }).join('');
+  document.getElementById('decSummary').innerHTML = summary;
+  document.getElementById('decFull').innerHTML = DECISIONS.map(d => {
+    const done = !!s['dec_' + d.id + '_done'];
+    return `<li class="dec-item ${done ? 'resolved' : ''}">
+      <input type="checkbox" data-key="dec_${d.id}_done" ${done ? 'checked' : ''}>
+      <div class="dec-body">
+        <div class="dec-title">${escape(d.title)}</div>
+        <div class="dec-note">${escape(d.body)}</div>
+        <textarea data-key="dec_${d.id}_notes" placeholder="Decision notes / status..."></textarea>
+      </div>
+      <div class="dec-deadline">${escape(d.deadline)}</div>
+    </li>`;
+  }).join('');
+}
+
+/* ── Tour ── */
+const TOUR = [
+  { id: 'bay',    loc: 'Bay Area',        when: 'July 9, 2026', contact: 'Jerome / Erupt Mgmt — boom-bap night', anchor: true },
+  { id: 'lasd',   loc: 'LA / San Diego',  when: 'July 10, 2026', contact: 'Whichever booked first' },
+  { id: 'vegaz',  loc: 'Vegas / Arizona', when: 'July 11, 2026', contact: 'Whichever booked first' },
+  { id: 'hq',     loc: 'Denver HQ closer', when: 'July 30, 2026', contact: 'DeMond / KO / Ddubb bill', anchor: true },
+];
+function renderTour() {
+  const s = loadAll();
+  document.getElementById('tourGrid').innerHTML = TOUR.map(t => {
+    const sv = s['tour_' + t.id + '_status'] || 'PENDING';
+    return `<div class="tour-card${t.anchor ? ' is-anchor' : ''}">
+      <div class="tour-loc">${escape(t.loc)}</div>
+      <div class="tour-when">${escape(t.when)} · ${escape(t.contact)}</div>
+      <div class="tour-row">
+        <label>Status</label>
+        <select data-key="tour_${t.id}_status">
+          <option ${sv==='PENDING'?'selected':''}>PENDING</option>
+          <option ${sv==='OUTREACH'?'selected':''}>OUTREACH</option>
+          <option ${sv==='HOLD'?'selected':''}>HOLD</option>
+          <option ${sv==='CONFIRMED'?'selected':''}>CONFIRMED</option>
+          <option ${sv==='BOOKED'?'selected':''}>BOOKED</option>
+          <option ${sv==='AT RISK'?'selected':''}>AT RISK</option>
+          <option ${sv==='CUT'?'selected':''}>CUT</option>
+        </select>
+      </div>
+      <div class="tour-row"><label>Venue</label><input type="text" data-key="tour_${t.id}_venue" placeholder="Venue / promoter"></div>
+      <div class="tour-row"><label>Date lock</label><input type="text" data-key="tour_${t.id}_date" placeholder="Confirmed date"></div>
+      <div class="tour-row"><label>Contact</label><input type="text" data-key="tour_${t.id}_contact" placeholder="Name / number / email"></div>
+      <div class="tour-row" style="align-items:flex-start;"><label>Notes</label><textarea data-key="tour_${t.id}_notes" placeholder="Outreach status, comp asks, lodging..."></textarea></div>
+    </div>`;
+  }).join('');
+}
+
+/* ── Weekly day blocks ── */
+const SCHED = [
+  { day:'Monday',    chips:[{l:'Starbucks AM',c:'chip-job'},{l:'Edit content PM',c:'chip-debt'},{l:'Outreach / promo',c:'chip-promo'}] },
+  { day:'Tuesday',   chips:[{l:'Starbucks AM',c:'chip-job'},{l:'Hanging Mic',c:'chip-rec'},{l:'Album / mix',c:'chip-prod'}] },
+  { day:'Wednesday', chips:[{l:'Starbucks AM',c:'chip-job'},{l:'Hanging Mic',c:'chip-rec'},{l:'Doc edit',c:'chip-debt'}] },
+  { day:'Thursday',  chips:[{l:'Starbucks AM',c:'chip-job'},{l:'Hanging Mic',c:'chip-rec'},{l:'Networking show',c:'chip-net'}] },
+  { day:'Friday',    chips:[{l:'Starbucks AM',c:'chip-job'},{l:'Promo push',c:'chip-promo'},{l:'Mix / cover art',c:'chip-prod'}] },
+  { day:'Saturday',  note:'family / network nights', chips:[{l:'Photoshoot / Hanging Mic',c:'chip-rec'},{l:'Networking shows',c:'chip-net'},{l:'Family',c:'chip-fam'}] },
+  { day:'Sunday',    note:'reset · light edits', chips:[{l:'Starbucks',c:'chip-job'},{l:'Interview edits',c:'chip-debt'},{l:'Family',c:'chip-fam'}] },
+];
+function renderWeekly() {
+  document.getElementById('wkdays').innerHTML = SCHED.map(s => `
+    <div class="db">
+      <h3>${s.day}${s.note ? ` <span style="font-size:9px;font-weight:400;color:var(--muted);text-transform:none;">(${s.note})</span>` : ''}</h3>
+      <div class="chips">${s.chips.map(c => `<span class="chip ${c.c}">${c.l}</span>`).join('')}</div>
+      <div class="fg"><div class="fl">Focus notes</div><textarea data-key="wk_${s.day.toLowerCase()}" placeholder="Lock in on ${s.day}..."></textarea></div>
+    </div>`).join('');
+}
+
+/* ── Insider Circle ── */
+function updateIcBar(val) {
+  const raised = Math.max(0, parseFloat(val) || 0);
+  const pct = Math.min(100, (raised / 1500) * 100);
+  const bar = document.getElementById('icbar'); if (bar) bar.style.width = pct + '%';
+  const lbl = document.getElementById('ic-raised-lbl'); if (lbl) lbl.textContent = '$' + raised.toLocaleString() + ' raised';
+}
+
+/* ── Album budget recalc ── */
+function abtRecalc() {
+  const g = k => parseFloat(document.querySelector(`[data-key="${k}"]`)?.value) || 0;
+  const prod = g('abt_clothing') + g('abt_video') + g('abt_dancer') + g('abt_feature') + g('abt_cover');
+  const party = g('abt_studio') + g('abt_food') + g('abt_sticker') + g('abt_flyers');
+  const fmt = n => '$' + n.toLocaleString();
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('abt-prod-total', fmt(prod));
+  set('abt-party-total', fmt(party));
+  set('abt-grand-total', fmt(prod + party));
+}
+
+/* ── Export this week ── */
+function exportWeek() {
+  const mon = getMon(TODAY);
+  const we = new Date(mon); we.setDate(mon.getDate() + 6);
+  const header = `GAUGE CC — Week of ${fmtShort(mon)} – ${fmtShort(we)}\nRoxy in ${Math.max(0, daysBetween(startOfDay(TODAY), parseISO('2026-07-04')))} days\n` + '─'.repeat(40) + '\n';
+  const lines = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(mon); d.setDate(mon.getDate() + i);
+    const iso = d.toISOString().slice(0,10);
+    const evs = EVENTS.filter(e => e.d === iso);
+    if (evs.length === 0) continue;
+    lines.push(`\n${fmtDay(d).toUpperCase()} ${d.getMonth()+1}/${d.getDate()}`);
+    evs.forEach(e => {
+      const star = e.critical ? '★ ' : '  ';
+      const cost = e.cost ? ` (${e.cost})` : '';
+      lines.push(`${star}[${WS[e.ws].short}] ${e.t}${cost}${e.n ? ` — ${e.n}` : ''}`);
+    });
+  }
+  document.getElementById('exportText').value = header + lines.join('\n');
+  document.getElementById('exportModal').classList.add('on');
+}
+function closeModal() { document.getElementById('exportModal').classList.remove('on'); }
+function copyExport() {
+  const ta = document.getElementById('exportText');
+  ta.select(); document.execCommand('copy');
+  const btn = event.target; const orig = btn.textContent;
+  btn.textContent = 'Copied'; setTimeout(() => btn.textContent = orig, 1200);
+}
+
+/* ── Helpers ── */
+function escape(s) { return String(s || '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]); }
+function attachListeners() {
+  document.querySelectorAll('[data-key]').forEach(el => {
+    if (el._bound) return; el._bound = true;
+    const evt = (el.type === 'checkbox' || el.tagName === 'SELECT') ? 'change' : 'input';
+    el.addEventListener(evt, () => {
+      persistEl(el);
+      const key = el.dataset.key;
+      if (key && key.startsWith('dec_') && key.endsWith('_done')) {
+        const li = el.closest('.dec-item'); if (li) li.classList.toggle('resolved', el.checked);
+      }
+      if (key && key.startsWith('ws_') && key.endsWith('_status')) {
+        renderWorkstreams(); restoreFields();
+      }
+      if (key === 'ic_raised') updateIcBar(el.value);
+      if (key && key.startsWith('abt_')) abtRecalc();
+    });
+  });
+}
+function restoreFields() {
+  const s = loadAll();
+  document.querySelectorAll('[data-key]').forEach(el => {
+    const v = s[el.dataset.key]; if (v === undefined) return;
+    if (el.type === 'checkbox') el.checked = !!v;
+    else el.value = v;
+  });
+  recalcTickets(); updateIcBar(s.ic_raised || 0); abtRecalc(); updateOpenerTotal();
+  // resolved styling
+  DECISIONS.forEach(d => {
+    const cb = document.querySelector(`[data-key="dec_${d.id}_done"]`);
+    if (cb) { const li = cb.closest('.dec-item'); if (li) li.classList.toggle('resolved', cb.checked); }
+  });
+  attachListeners();
+}
+
+function resetAll() {
+  if (!confirm('Reset ALL saved data? This cannot be undone.')) return;
+  localStorage.removeItem(SK); location.reload();
+}
+
+/* ── INIT ── */
+document.addEventListener('DOMContentLoaded', () => {
+  renderCountdowns();
+  renderWeekStrip();
+  renderThisWeek();
+  renderWorkstreams();
+  renderOpeners();
+  renderDecisions();
+  renderTour();
+  renderWeekly();
+  renderCalFilter();
+  renderCalendar();
+  restoreFields();
+  const s = loadAll();
+  if (s.__page) go(s.__page, true);
+  setInterval(renderCountdowns, 60000);
+});
+</script>
+</body>
+</html>
